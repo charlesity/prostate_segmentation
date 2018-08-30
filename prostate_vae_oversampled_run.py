@@ -299,9 +299,9 @@ if __name__ == '__main__':
 
 
     if slice_number_feature:
-        vae.load_weights('prostate_vae_extra_feature_with_minus_1.h5')
+        vae.load_weights('prostate_vae_extra_feature.h5')
     else:
-        vae.load_weights('prostate_vae_without_extra_feature_with_minus_1.h5')
+        vae.load_weights('prostate_vae_without_extra_feature.h5')
 
 
     data = (x_test, y_test)
