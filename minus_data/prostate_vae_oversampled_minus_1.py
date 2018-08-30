@@ -229,10 +229,10 @@ z = Lambda(sampling, output_shape=(latent_dim,), name='z')([z_mean, z_log_var])
 # instantiate encoder model
 encoder = Model(inputs, [z_mean, z_log_var, z], name='encoder')
 encoder.summary()
-if slice_number_feature:
-    plot_model(encoder, to_file='prostate_encoder_extra_feature_with_minus_1.png', show_shapes=True)
-else:
-    plot_model(encoder, to_file='prostate_encoder_without_extra_feature_with_minus_1.png', show_shapes=True)
+# if slice_number_feature:
+#     plot_model(encoder, to_file='prostate_encoder_extra_feature_with_minus_1.png', show_shapes=True)
+# else:
+#     plot_model(encoder, to_file='prostate_encoder_without_extra_feature_with_minus_1.png', show_shapes=True)
 
 # build decoder model
 latent_inputs = Input(shape=(latent_dim,), name='z_sampling')
@@ -256,10 +256,10 @@ outputs = Conv2DTranspose(filters=1,
 # instantiate decoder model
 decoder = Model(latent_inputs, outputs, name='decoder')
 decoder.summary()
-if slice_number_feature:
-    plot_model(decoder, to_file='prostate_decoder_extra_feature_with_minus_1.png', show_shapes=True)
-else:
-    plot_model(decoder, to_file='prostate_decoder_without_extra_feature_with_minus_1.png', show_shapes=True)
+# if slice_number_feature:
+#     plot_model(decoder, to_file='prostate_decoder_extra_feature_with_minus_1.png', show_shapes=True)
+# else:
+#     plot_model(decoder, to_file='prostate_decoder_without_extra_feature_with_minus_1.png', show_shapes=True)
 
 
 # instantiate VAE model
@@ -291,10 +291,10 @@ if __name__ == '__main__':
     vae.add_loss(vae_loss)
     vae.compile(optimizer='rmsprop')
     vae.summary()
-    if slice_number_feature:
-        plot_model(vae, to_file='prostate_vae_extra_feature_with_minus_1.png', show_shapes=True)
-    else:
-        plot_model(vae, to_file='prostate_vae_without_extra_feature_with_minus_1.png', show_shapes=True)
+    # if slice_number_feature:
+    #     plot_model(vae, to_file='prostate_vae_extra_feature_with_minus_1.png', show_shapes=True)
+    # else:
+    #     plot_model(vae, to_file='prostate_vae_without_extra_feature_with_minus_1.png', show_shapes=True)
 
 
 
