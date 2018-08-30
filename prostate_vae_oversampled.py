@@ -149,7 +149,7 @@ img_dim = (28**2)
 XY_Data = np.load("./Processed_data/XY_Dataset_28_28.npy")
 
 # subset = len(XY_Data)
-subset = 1000
+subset = 45000
 
 X = XY_Data[:, :img_dim]
 y = XY_Data[:, img_dim]
@@ -172,7 +172,7 @@ X, y = sm.fit_sample(X, y)
 
 
 
-percent_test = .33
+percent_test = .2
 
 
 num_train = int(X.shape[0]*(1-percent_test))

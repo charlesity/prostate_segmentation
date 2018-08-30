@@ -149,7 +149,7 @@ img_dim = (28**2)
 XY_Data = np.load("./Processed_data/XY_Dataset_28_28.npy")
 
 # subset = len(XY_Data)
-subset = 1000
+subset = 10000
 
 X = XY_Data[:, :img_dim]
 y = XY_Data[:, img_dim]
@@ -305,7 +305,7 @@ if __name__ == '__main__':
 
 
     data = (x_test, y_test)
-    plot_results(models, data, batch_size=batch_size, model_name="postate vae")
+    # plot_results(models, data, batch_size=batch_size, model_name="postate vae")
 
 
     x_test = vae.predict(x_test)
