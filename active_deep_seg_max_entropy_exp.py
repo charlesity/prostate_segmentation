@@ -78,12 +78,14 @@ class DataGenerator(keras.utils.Sequence):
                 theX = np.vstack((theX, tempX))
                 theY  = np.hstack((theY, self.XY_Data[id, image_s]))
         # over sample using smote
+
         theX, theY = self.oversampler.fit_sample(theX, theY)
+
         return theX.reshape(theX.shape[0], self.n_channels, *self.dim), theY
 
 currentScript = os.path.splitext(__file__)[0]  #to collect performance data
 
-n_experiments = 3  # number of experiments
+n_experiments = 2  # number of experiments
 batch_size = 128
 nb_classes = 2
 
@@ -105,9 +107,9 @@ dropout_iterations = 20  # number of dropout ROUNDS for uncertainty estimation
 active_query_batch = 2  # number to added to the training data after active score evaluation
 # All unlabeled samples could be considered
 
-X_Train_percent = .2  # initial train percent from the entire training set
+X_Train_percent = .1  # initial train percent from the entire training set
 x_val_percent = .5  # of leftovers
-
+total_train = .7
 pool_batch_samples = 100  #Number to sample from the Pool for dropout evaluation
 
 img_dim = img_rows * img_cols  #flattened image dimension
@@ -115,14 +117,19 @@ img_dim = img_rows * img_cols  #flattened image dimension
 # XY_Data = fetch_data(all_files, 0)
 XY_Data = np.load("./Processed_data/XY_Dataset_28_28.npy")
 slice_list = np.unique(XY_Data[:, XY_Data.shape[1]-1])
-random.shuffle(slice_list)
-total_train = .7
 
 for experiment_index in range(n_experiments):
+    random.shuffle(slice_list)
     total_train_num = int(total_train *len(slice_list))
-    # print (total_train_num, len(slice_list))
     train_slices = slice_list[:total_train_num]
     test_slices = slice_list[total_train_num:]
+
+    initial_labeled_training_num = int(X_Train_percent* total_train_num)
+    initial_labeled_slices = train_slices[:initial_labeled_training_num]
+    print ('Total number of training slices', len(train_slices))
+    print ('Total number of test slices', len(test_slices))
+    print ('Number of slices to consider initially ', len(initial_labeled_slices))
+
 
     params = {'slice_number_index' : XY_Data.shape[1]-1,
                 'dim': (img_rows, img_cols),
@@ -131,45 +138,19 @@ for experiment_index in range(n_experiments):
               'shuffle':True}
 
     input_shape = (1, img_rows, img_cols)
-    training_Generator = DataGenerator(train_slices, XY_Data, **params)
-    # A= training_Generator[0]
-    # print (A[0].shape, A[1].shape)
-    #
+
+    training_Generator = DataGenerator(initial_labeled_slices, XY_Data, **params)
     testingg_Generator = DataGenerator(test_slices, XY_Data, **params)
     model = net(input_shape, n_inputs=XY_Data.shape[0], filters=None, kernel_size=None, maxpool=None)
     model.fit_myGenerator(training_Generator, nb_epochs=2)
-    quit()
-
-    # X_Train_all, Y_Train_all = build_dataset(train_slices, img_dim)
-    # X_Test, Y_Test = build_dataset(test_slices, img_dim)
-
-    # print (X_Test.shape, Y_Test.shape)
-
-	# if K.image_data_format() == 'channels_first':
-	#reshape to appropriate backend format
-
-    # X_Train_all = X_Train_all.reshape(X_Train_all.shape[0], 1, img_rows,
-    #                                   img_cols)
-    #
-    #
-    # X_Test = X_Test.reshape(X_Test.shape[0], 1, img_rows, img_cols)
-    # Y_Test = np_utils.to_categorical(Y_Test, nb_classes)	#one hot encode Y_Test
-    # input_shape = (1, img_rows, img_cols)
-    #
-    # #split train set into train, val, and unlabeled pool
-    # X_Train, Y_Train, X_Valid, Y_Valid, X_Pool, Y_Pool = split_train(X_Train_all, Y_Train_all, img_rows = img_rows, img_cols =img_cols, nb_classes= nb_classes,
-    #  X_Train_percent = X_Train_percent, val_percent =x_val_percent)
-    #
-    #
-    # #performance evaluation metric for each experiment
-    # All_auc = list()  #Receiver Operator Characteristic data
+    All_auc = list()  #Receiver Operator Characteristic data
     # All_fpr = list()  # all false positive rates
     # All_tpr = list()  # all true positive rates
-    # All_pre = list()
-    # All_rec = list()
-    # All_ap = list()
-    # All_recall_score = list()
-    # All_precision_score = list()
+    All_pre = list()
+    All_rec = list()
+    All_ap = list()
+    All_recall_score = list()
+    All_precision_score = list()
     # X_Pool_All = np.zeros(shape=(1))  #store all the pooled indices
     #
     # model = build_model(nb_filters, nb_conv, nb_pool, input_shape, nb_classes, X_Train.shape[0], c_param = 3.5)
