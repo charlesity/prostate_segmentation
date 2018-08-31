@@ -142,7 +142,7 @@ for experiment_index in range(n_experiments):
     training_Generator = DataGenerator(initial_labeled_slices, XY_Data, **params)
     testingg_Generator = DataGenerator(test_slices, XY_Data, **params)
     model = net(input_shape, n_inputs=XY_Data.shape[0], filters=None, kernel_size=None, maxpool=None)
-    model.fit_myGenerator(training_Generator, nb_epochs=2)
+    model.fit_myGenerator(training_Generator, nb_epochs=50)
     All_auc = list()  #Receiver Operator Characteristic data
     # All_fpr = list()  # all false positive rates
     # All_tpr = list()  # all true positive rates
