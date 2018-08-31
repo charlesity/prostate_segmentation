@@ -115,10 +115,11 @@ class net:
         #         if batches >= len(X_Train)/batch_size:
         #             break
     def fit_myGenerator(self, dataGen, nb_epochs):
-        self.model.fit_generator(dataGen, epochs=nb_epochs, verbose=1, workers=6, use_multiprocessing=True)
+        self.model.fit_generator(dataGen, epochs=nb_epochs, verbose=0, workers=6, use_multiprocessing=True)
 
     def fit(self, X_Train, Y_Train, batches, nb_epochs, validation_split):
-        self.model.fit(X_Train, Y_Train, batch_size=batches, verbose =1, validation_split=validation_split)
+        print ("Training")
+        self.model.fit(X_Train, Y_Train, batch_size=batches, verbose =0, validation_split=validation_split)
 
     def predict_stochastic(self, X_test):
         print ("Performing Bayesian Inference using Dropout")
