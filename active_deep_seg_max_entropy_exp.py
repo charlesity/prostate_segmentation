@@ -33,7 +33,7 @@ from imblearn.over_sampling import SMOTE
 
 
 class DataGenerator(keras.utils.Sequence):
-    def __init__(self, slice_IDs, XY_Data, slice_number_index, oversampler = SMOTE(random_state=0), batch_size = 32, dim = (28,28),
+    def __init__(self, slice_IDs, XY_Data, slice_number_index, oversampler = SMOTE(random_state=0), batch_size = 16, dim = (28,28),
                  n_channels = 1, nb_classes = 10, shuffle=True):
         'initialization'
         self.dim = dim
