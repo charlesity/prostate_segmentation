@@ -172,7 +172,7 @@ X, y = sm.fit_sample(X, y)
 
 
 
-percent_test = .33
+percent_test = .50
 
 
 num_train = int(X.shape[0]*(1-percent_test))
