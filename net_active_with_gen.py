@@ -16,8 +16,8 @@ import time
 
 class net:
 
-    def __init__(self, X_train, y_train, input_shape, filters, kernel_size,
-        maxpool,  loss_function='categorical_crossentropy', nb_classes= 2, droput_iteration=20, dropout = 0.05):
+    def __init__(self, input_shape, filters, kernel_size,
+        maxpool, n_inputs,   loss_function='categorical_crossentropy', nb_classes= 2, droput_iteration=20, dropout = 0.05):
 
         """
             Constructor for the class implementing a Bayesian neural network
@@ -54,9 +54,6 @@ class net:
 
         self.droput_iteration = droput_iteration
         self.nb_classes = nb_classes
-        self.mean_y_train = np.mean(y_train)
-        self.std_y_train = np.std(y_train)
-
 
 
         # model = Sequential()
@@ -79,7 +76,7 @@ class net:
         # model.compile(loss=loss_function, optimizer='adam')
 
         c = 3.5
-        Weight_Decay = c / float(X_train.shape[0])
+        Weight_Decay = c / float(n_inputs)
 
         model = Sequential()
         model.add(Dense(256, input_shape =input_shape))
@@ -117,8 +114,8 @@ class net:
         #         print (v)
         #         if batches >= len(X_Train)/batch_size:
         #             break
-    def fit_myGenerator(self, dataGen, X_Train, y_train, batch_size, nb_epochs):
-        fit_generator(dataGen, epochs=nb_epochs, verbose=1, workers=6, use_multiprocessing=False)
+    def fit_myGenerator(self, dataGen, nb_epochs):
+        self.model.fit_generator(dataGen, epochs=nb_epochs, verbose=1, workers=6, use_multiprocessing=True)
 
     def fit(self, X_Train, Y_Train, batches, nb_epochs, validation_split):
         self.model.fit(X_Train, Y_Train, batch_size=batches, verbose =1, validation_split=validation_split)
