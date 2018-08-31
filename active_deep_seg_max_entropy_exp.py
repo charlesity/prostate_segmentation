@@ -33,7 +33,7 @@ from imblearn.over_sampling import SMOTE
 
 
 class DataGenerator(keras.utils.Sequence):
-    def __init__(self, slice_IDs, XY_Data, slice_number_index, oversampler = SMOTE(random_state=0), batch_size = 16, dim = (28,28),
+    def __init__(self, slice_IDs, XY_Data, slice_number_index, oversampler = None, batch_size = 16, dim = (28,28),
                  n_channels = 1, nb_classes = 10, shuffle=True):
         'initialization'
         self.dim = dim
@@ -78,9 +78,8 @@ class DataGenerator(keras.utils.Sequence):
                 theX = np.vstack((theX, tempX))
                 theY  = np.hstack((theY, self.XY_Data[id, image_s]))
         # over sample using smote
-
-        theX, theY = self.oversampler.fit_sample(theX, theY)
-
+        if self.oversampler != None:
+            theX, theY = self.oversampler.fit_sample(theX, theY)
         return theX.reshape(theX.shape[0], self.n_channels, *self.dim), theY
 
 currentScript = os.path.splitext(__file__)[0]  #to collect performance data
@@ -139,8 +138,8 @@ for experiment_index in range(n_experiments):
 
     input_shape = (1, img_rows, img_cols)
 
-    training_Generator = DataGenerator(initial_labeled_slices, XY_Data, **params)
-    testingg_Generator = DataGenerator(test_slices, XY_Data, **params)
+    training_Generator = DataGenerator(initial_labeled_slices, XY_Data, oversampler=SMOTE(random_state=0), **params)
+    testingg_Generator = DataGenerator(test_slices, XY_Data, oversampler=SMOTE(random_state=0), **params)
     model = net(input_shape, n_inputs=XY_Data.shape[0], filters=None, kernel_size=None, maxpool=None)
     model.fit_myGenerator(training_Generator, nb_epochs=50)
     All_auc = list()  #Receiver Operator Characteristic data
@@ -151,21 +150,7 @@ for experiment_index in range(n_experiments):
     All_ap = list()
     All_recall_score = list()
     All_precision_score = list()
-    # X_Pool_All = np.zeros(shape=(1))  #store all the pooled indices
-    #
-    # model = build_model(nb_filters, nb_conv, nb_pool, input_shape, nb_classes, X_Train.shape[0], c_param = 3.5)
-    # model.compile(loss='categorical_crossentropy', optimizer='adam')
-    # model.fit(
-    #     X_Train,
-    #     Y_Train,
-    #     batch_size=batch_size,
-    #     nb_epoch=nb_epoch,
-    #     show_accuracy=True,
-    #     verbose=1,
-    #     validation_data=(X_Valid, Y_Valid))
-    #
-    # #collect statistics of performance
-    # y_predicted = model.predict(X_Test, batch_size=batch_size)
+    # y_predicted = model.predict_gen(testingg_Generator)
     # y_reversed = np.argmax(Y_Test, axis=1)
     # y_score = np.argmax(y_predicted, axis =1)
     #
@@ -193,7 +178,7 @@ for experiment_index in range(n_experiments):
     # All_recall_score.append(recall_score)
     # All_precision_score.append(precision_score)
     # print('Starting Active Learning in Experiment ', e)
-    #
+
     # for i in range(acquisition_iterations):
     #     print('POOLING ITERATION', i)
     #

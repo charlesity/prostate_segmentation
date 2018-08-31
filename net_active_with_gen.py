@@ -130,7 +130,7 @@ class net:
         return prediction_hat
 
     def predict_gen(self, predGen, X_Test, batch_size):
-        return self.model.predict_generator(predGen.flow(X_Test, batch_size = batch_size), use_multiprocessing = True)
+        return self.model.predict_generator(predGen, batch_size=batches, use_multiprocessing = True)
 
 
     def pred(self, X_test, batch_size):
