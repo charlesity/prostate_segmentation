@@ -82,10 +82,24 @@ class DataGenerator(keras.utils.Sequence):
             theX, theY = self.oversampler.fit_sample(theX, theY)
         return theX.reshape(theX.shape[0], self.n_channels, *self.dim), theY
 
+
+def get_y_generator_data(generator):
+    no_batches = 0
+    Y = list()
+    for d in generator:
+        if len(Y) == 0:
+            Y = d[1]
+        else:
+            Y = np.vstack((Y, d[1]))
+        no_batches +=1
+        if no_batches >= generator.__len__():
+            break
+    return Y
+
 currentScript = os.path.splitext(__file__)[0]  #to collect performance data
 
-n_experiments = 2  # number of experiments
-batch_size = 128
+n_experiments = 1  # number of experiments
+batch_size = 32
 nb_classes = 2
 
 # input image dimensions
@@ -97,7 +111,7 @@ nb_pool = 3
 # convolution kernel size
 nb_conv = 4
 
-nb_epoch = 100
+nb_epoch = 10
 
 acquisition_iterations = 50 # number of aquisitions from unlabeled samples
 
@@ -106,8 +120,7 @@ dropout_iterations = 20  # number of dropout ROUNDS for uncertainty estimation
 active_query_batch = 2  # number to added to the training data after active score evaluation
 # All unlabeled samples could be considered
 
-X_Train_percent = .1  # initial train percent from the entire training set
-x_val_percent = .5  # of leftovers
+X_Train_percent = .01  # initial train percent from the entire training set
 total_train = .7
 pool_batch_samples = 100  #Number to sample from the Pool for dropout evaluation
 
@@ -129,31 +142,38 @@ for experiment_index in range(n_experiments):
     print ('Total number of test slices', len(test_slices))
     print ('Number of slices to consider initially ', len(initial_labeled_slices))
 
-
     params = {'slice_number_index' : XY_Data.shape[1]-1,
                 'dim': (img_rows, img_cols),
-              'batch_size': 32,
-              'nb_classes': 2,
+              'batch_size': batch_size,
+              'nb_classes': nb_classes,
               'shuffle':True}
 
     input_shape = (1, img_rows, img_cols)
 
     training_Generator = DataGenerator(initial_labeled_slices, XY_Data, oversampler=SMOTE(random_state=0), **params)
-    testingg_Generator = DataGenerator(test_slices, XY_Data, oversampler=SMOTE(random_state=0), **params)
+    testing_Generator = DataGenerator(test_slices, XY_Data, oversampler=SMOTE(random_state=0), **params)
+
+
     model = net(input_shape, n_inputs=XY_Data.shape[0], filters=None, kernel_size=None, maxpool=None)
-    model.fit_myGenerator(training_Generator, nb_epochs=50)
+    history = model.fit_myGenerator(testing_Generator, nb_epochs=nb_epoch)
+
     All_auc = list()  #Receiver Operator Characteristic data
-    # All_fpr = list()  # all false positive rates
-    # All_tpr = list()  # all true positive rates
     All_pre = list()
     All_rec = list()
     All_ap = list()
     All_recall_score = list()
     All_precision_score = list()
-    # y_predicted = model.predict_gen(testingg_Generator)
-    # y_reversed = np.argmax(Y_Test, axis=1)
-    # y_score = np.argmax(y_predicted, axis =1)
+    score = model.evaluate_myGenerator(testing_Generator)
+    print (score)
+    # y_predicted = model.predict_gen(testing_Generator)
     #
+    # y_reversed = np.argmax(get_y_generator_data(testing_Generator), axis=1)
+    print (history.history['acc'])
+    # plt.plot(history.history['acc'])
+    # plt.show()
+    # print (y_predicted)
+    # y_score = np.argmax(y_predicted, axis =1)
+    # #
     # fpr = dict()
     # tpr = dict()
     # auc = dict()
@@ -161,6 +181,7 @@ for experiment_index in range(n_experiments):
     # for ci in range(nb_classes):
     #     fpr[ci], tpr[ci], _ =  metrics.roc_curve(Y_Test[:, ci], y_predicted[:, ci])
     #     auc[ci] = metrics.auc(fpr[ci], tpr[ci])
+    #     print (auc[ci])
     #
     # precision_score = metrics.precision_score(y_reversed, y_score)
     # recall_score = metrics.recall_score(y_reversed, y_score)

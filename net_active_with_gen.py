@@ -90,7 +90,7 @@ class net:
         model.add(Activation('softmax'))
 
 
-        model.compile(loss=loss_function, optimizer='adam')
+        model.compile(loss=loss_function, optimizer='adam', metrics=['acc'])
 
 
         self.model = model
@@ -100,12 +100,15 @@ class net:
         # #function for bayesian inference using dropouts
         # self.f = K.function([model.layers[0].input, K.learning_phase()],
         #        [model.layers[-1].output])
+    def __prepare_stochastic_function(self):
+        self.f = K.function([self.model.layers[0].input, K.learning_phase()], [self.model.layers[-1].output])
 
     def fit_gen(self, dataGen, X_Train, y_train, batch_size, nb_epochs):
-        self.model.fit_generator(dataGen.flow(X_Train, y_train, batch_size = batch_size)
+        self.history = self.model.fit_generator(dataGen.flow(X_Train, y_train, batch_size = batch_size)
             , steps_per_epoch = len(X_Train)/ batch_size, epochs = nb_epochs, verbose = 1)
 
-        self.f = K.function([self.model.layers[0].input, K.learning_phase()], [self.model.layers[-1].output])
+        self.__prepare_stochastic_function()
+        return self.history
         # for e in range(nb_epochs):
         #     print ('Epoch', e)
         #     batches = 0
@@ -115,11 +118,18 @@ class net:
         #         if batches >= len(X_Train)/batch_size:
         #             break
     def fit_myGenerator(self, dataGen, nb_epochs):
-        self.model.fit_generator(dataGen, epochs=nb_epochs, verbose=0, workers=6, use_multiprocessing=True)
+        print ("Training with Generator...")
+        self.history = self.model.fit_generator(dataGen, epochs=nb_epochs, verbose=0, workers=6, use_multiprocessing=True)
+        self.__prepare_stochastic_function()
+        return self.history
 
     def fit(self, X_Train, Y_Train, batches, nb_epochs, validation_split):
-        print ("Training")
+        print ("Training...")
         self.model.fit(X_Train, Y_Train, batch_size=batches, verbose =0, validation_split=validation_split)
+
+    def get_y(self, y_true, y_pred):
+        # print (y_true.shape, y_pred.shape)
+        return y_true
 
     def predict_stochastic(self, X_test):
         print ("Performing Bayesian Inference using Dropout")
@@ -130,9 +140,12 @@ class net:
         print ("Done Performing Bayesian Inference using Dropout")
         return prediction_hat
 
-    def predict_gen(self, predGen, X_Test, batch_size):
-        return self.model.predict_generator(predGen, batch_size=batches, use_multiprocessing = True)
-
-
+    def predict_gen(self, predGen):
+        print ("Predicting with generator...")
+        return self.model.predict_generator(predGen, workers=6, use_multiprocessing = True)
+    def evaluate_myGenerator(self, generator):
+        self.score= self.model.evaluate_generator(generator, steps=None, max_queue_size=10
+                                                           , workers=1, use_multiprocessing=True, verbose=0)
+        return self.score
     def pred(self, X_test, batch_size):
         return self.model.predict(X_test, batch_size=batch_size, verbose=1)
