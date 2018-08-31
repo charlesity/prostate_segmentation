@@ -4,3 +4,4 @@
 /minus_data/Processed_data/
 /Pooled_Images/
 *.ipynb_checkpoints/
+*.pyc
