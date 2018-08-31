@@ -16,7 +16,7 @@ import time
 
 class net:
 
-    def __init__(self, X_train, y_train, input_shape, filters, kernel_size, 
+    def __init__(self, X_train, y_train, input_shape, filters, kernel_size,
         maxpool,  loss_function='categorical_crossentropy', nb_classes= 2, droput_iteration=20, dropout = 0.05):
 
         """
@@ -56,8 +56,8 @@ class net:
         self.nb_classes = nb_classes
         self.mean_y_train = np.mean(y_train)
         self.std_y_train = np.std(y_train)
-        
-        
+
+
 
         # model = Sequential()
         # model.add(Conv2D(filters, (kernel_size, kernel_size), padding='same',
@@ -66,7 +66,7 @@ class net:
         # model.add(Conv2D(filters, (kernel_size, kernel_size)))
         # model.add(Activation('relu'))
         # model.add(MaxPooling2D(pool_size=(maxpool, maxpool)))
-        # model.add(Dropout(dropout))        
+        # model.add(Dropout(dropout))
         # c = 3.5
         # Weight_Decay = c / float(X_train.shape[0])
         # model.add(Flatten())
@@ -81,7 +81,7 @@ class net:
         c = 3.5
         Weight_Decay = c / float(X_train.shape[0])
 
-        model = Sequential()        
+        model = Sequential()
         model.add(Dense(256, input_shape =input_shape))
         model.add(Activation('relu'))
         model.add(Dropout(dropout))
@@ -99,7 +99,7 @@ class net:
         self.model = model
         # # We iterate the learning process
         # model.fit(X_train, y_train, batch_size=self.batch_size, nb_epoch=n_epochs, verbose=0)
-        
+
         # #function for bayesian inference using dropouts
         # self.f = K.function([model.layers[0].input, K.learning_phase()],
         #        [model.layers[-1].output])
@@ -117,6 +117,9 @@ class net:
         #         print (v)
         #         if batches >= len(X_Train)/batch_size:
         #             break
+    def fit_myGenerator(self, dataGen, X_Train, y_train, batch_size, nb_epochs):
+        fit_generator(dataGen, epochs=nb_epochs, verbose=1, workers=6, use_multiprocessing=False)
+
     def fit(self, X_Train, Y_Train, batches, nb_epochs, validation_split):
         self.model.fit(X_Train, Y_Train, batch_size=batches, verbose =1, validation_split=validation_split)
 
@@ -126,7 +129,7 @@ class net:
         for i in range(self.droput_iteration):
             results = results + self.f((X_test, 1))[0]
         prediction_hat = np.divide(results, self.droput_iteration)
-        print ("Done Performing Bayesian Inference using Dropout")        
+        print ("Done Performing Bayesian Inference using Dropout")
         return prediction_hat
 
     def predict_gen(self, predGen, X_Test, batch_size):

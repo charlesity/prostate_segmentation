@@ -27,6 +27,7 @@ def retrieve_coordinates(image):
   return (np.min(rowNums), np.max(rowNums), np.min(colNums), np.max(colNums))
 
 def resize_dataset(file, test_percent = .33, previous_shape =(160,160), image_size = (28,28)):
+  global serial_slice_num
   filename, _ = os.path.splitext(os.path.basename(file))
   #if its already generated skip it
   # if os.path.isfile(filename+'_'+str(image_size[0])+'_'+str(image_size[1])+'.npy'):
@@ -34,7 +35,12 @@ def resize_dataset(file, test_percent = .33, previous_shape =(160,160), image_si
   print ('Processing File ', filename)
   arr = np.load(file)
   dataset = list()
+  current_no = 0
   for d in arr:
+    if (d[1] > current_no):
+      current_no += 1
+      serial_slice_num = serial_slice_num +1
+    # print (d[1], serial_slice_num)
     im =d[0][0].toarray().reshape(previous_shape)
     im[im==0.0] = None
     box = retrieve_coordinates(im)    
@@ -47,19 +53,13 @@ def resize_dataset(file, test_percent = .33, previous_shape =(160,160), image_si
     # plt.imshow(im)
     # plt.show()
     # quit()
-    row = np.append(im.ravel(), [d[0][1], d[1]])
+    row = np.append(im.ravel(), [d[0][1], d[1], serial_slice_num])
     dataset.append(row)
   np.save(location+filename+'_'+str(image_size[0])+'_'+str(image_size[1])+"_with_minus_1", dataset)
 
+serial_slice_num = 0
 location = "./rescaled_minus/"
 all_files = glob.glob('../with_zeros/*.npy')
+all_files = sorted(all_files)
 for afile in all_files:
   resize_dataset(afile)
-  # break
-# arr = np.load(all_files[0])
-# database =np.array([np.concatenate((d[0][0].toarray().ravel(), [d[0][1]], [d[1]])) for d in arr])
-
-# im =database[450, :25600].reshape(160,160)
-# im = resize(im, (30,30))
-# plt.imshow(im)
-# plt.show()
