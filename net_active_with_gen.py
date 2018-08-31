@@ -144,8 +144,7 @@ class net:
         print ("Predicting with generator...")
         return self.model.predict_generator(predGen, workers=6, use_multiprocessing = True)
     def evaluate_myGenerator(self, generator):
-        self.score= self.model.evaluate_generator(generator, steps=None, max_queue_size=10
-                                                           , workers=1, use_multiprocessing=True, verbose=0)
+        self.score= self.model.evaluate_generator(generator, workers=6, use_multiprocessing=True)
         return self.score
     def pred(self, X_test, batch_size):
         return self.model.predict(X_test, batch_size=batch_size, verbose=1)
