@@ -5,3 +5,4 @@
 /Pooled_Images/
 *.ipynb_checkpoints/
 *.pyc/
+/__pycashe__/
