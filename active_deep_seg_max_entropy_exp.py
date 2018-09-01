@@ -111,7 +111,7 @@ nb_pool = 3
 # convolution kernel size
 nb_conv = 4
 
-nb_epoch = 10
+nb_epoch = 100
 
 acquisition_iterations = 50 # number of aquisitions from unlabeled samples
 
@@ -152,8 +152,7 @@ for experiment_index in range(n_experiments):
 
     training_Generator = DataGenerator(initial_labeled_slices, XY_Data, oversampler=SMOTE(random_state=0), **params)
     testing_Generator = DataGenerator(test_slices, XY_Data, oversampler=SMOTE(random_state=0), **params)
-
-
+gener@re2@17
     model = net(input_shape, n_inputs=XY_Data.shape[0], filters=None, kernel_size=None, maxpool=None)
     history = model.fit_myGenerator(testing_Generator, nb_epochs=nb_epoch)
 
