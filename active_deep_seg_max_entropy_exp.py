@@ -142,9 +142,9 @@ pool_size = 3
 # convolution kernel size
 kernel_size = 4
 
-nb_epoch = 100
+nb_epoch = 1
 
-acquisition_iterations = 20 # number of aquisitions from unlabeled samples
+acquisition_iterations = 1 # number of aquisitions from unlabeled samples
 
 dropout_iterations = 30  # number of dropout ROUNDS for uncertainty estimation
 
@@ -165,12 +165,12 @@ for experiment_index in range(n_experiments):
     slice_list = np.arange(num_slices)
     random.shuffle(slice_list)
     total_train_num = int(total_train *len(slice_list))
-    train_slices = slice_list[:total_train_num]
-    test_slices = slice_list[total_train_num:]
+    train_slices = np.array(slice_list[:total_train_num])
+    test_slices = np.array(slice_list[total_train_num:])
 
     initial_labeled_training_num = int(X_Train_percent* total_train_num)
-    initial_labeled_slices = train_slices[:initial_labeled_training_num]
-    unlabeled_slices = train_slices[initial_labeled_training_num:]
+    initial_labeled_slices = np.array(train_slices[:initial_labeled_training_num])
+    unlabeled_slices = np.array(train_slices[initial_labeled_training_num:])
     print ('Total number of training slices', len(train_slices))
     print ('Total number of test slices', len(test_slices))
     print ('Number of slices to consider initially ', len(initial_labeled_slices))
@@ -242,7 +242,7 @@ for experiment_index in range(n_experiments):
         print('POOLING ITERATION', i)
         test_dropout_slices = unlabeled_slices[:pool_batch_samples]  #sample a subset of unlabeled set
         slice_probabilities = np.zeros(len(test_dropout_slices))
-        # print (test_dropout_slices)
+        print (len(test_dropout_slices))
         for i, aSlice in enumerate(test_dropout_slices):
             testing_gen_dropout = DataGenerator([aSlice], oversampler=None, **test_params)
             prob_supixels = model.predict_stochastic(get_Xy_generator_data(testing_gen_dropout)[0])
@@ -253,63 +253,68 @@ for experiment_index in range(n_experiments):
         Log_Pi = np.log2(slice_probabilities)
         Entropy_Pi = -1 * np.multiply(slice_probabilities, Log_Pi)
         acquisition_index = Entropy_Pi.argsort()[-active_query_batch:][::-1]
+        print (acquisition_index)
         acquired_list = test_dropout_slices[acquisition_index]
-
+        print (acquired_list)
+        print (test_dropout_slices)
         # add to the list of labeled
         initial_labeled_slices =np.concatenate([initial_labeled_slices, acquired_list])
         # print (initial_labeled_slices)
-
+        print (len(unlabeled_slices), len(np.unique(unlabeled_slices)), len(test_dropout_slices))
+        print ((unlabeled_slices))
         unlabeled_slices = np.delete(unlabeled_slices, (test_dropout_slices))
-
+        print (len(unlabeled_slices))
+        print (unlabeled_slices)
+        print (len(np.unique(unlabeled_slices)))
         # print ('length of unlabed ',len(unlabeled_slices), len(test_dropout_slices))
         #
         # print (test_dropout_slices)
-        test_dropout_slices = np.delete(test_dropout_slices, (acquired_list))
-
-
-        unlabeled_slices =np.concatenate([unlabeled_slices, test_dropout_slices])
-        print (initial_labeled_slices)
-        training_Generator = DataGenerator(initial_labeled_slices, oversampler=SMOTE(random_state=0), **train_params)
-        model = net(input_shape, filters=nb_filters
-                    , kernel_size=kernel_size, maxpool=pool_size)
-
-        history = model.fit_myGenerator(training_Generator, nb_epochs=nb_epoch)
-        #performance evaluation metric for each experiment
-        All_auc = list()  #Receiver Operator Characteristic data
-        All_fpr = list()  # all false positive rates
-        All_tpr = list()  # all true positive rates
-        All_pre = list()
-        All_rec = list()
-        All_ap = list()
-        All_recall_score = list()
-        All_precision_score = list()
-
-        testing_Generator = DataGenerator(test_slices, oversampler=None, **test_params)
-        X_Test, Y_Test = get_Xy_generator_data(testing_Generator)
-        Y_Predicted = model.pred(X_Test, batch_size=128)
-
-        #collect statistics of performance
-        y_reversed = np.argmax(Y_Test, axis=1)
-        y_score = np.argmax(Y_Predicted, axis =1)
-
-        fpr = dict()
-        tpr = dict()
-        auc = dict()
-        #collect statistics for the two classes
-        for ci in range(nb_classes):
-            fpr[ci], tpr[ci], _ =  metrics.roc_curve(Y_Test[:, ci], Y_Predicted[:, ci])
-            auc[ci] = metrics.auc(fpr[ci], tpr[ci])
-
-
-        precision_score = metrics.precision_score(y_reversed, y_score)
-        recall_score = metrics.recall_score(y_reversed, y_score)
-        precision, recall, _ = metrics.precision_recall_curve(y_reversed, y_score, pos_label = 1)
-        average_precision = metrics.average_precision_score(y_reversed, y_score)
-        print ("Experiment ", experiment_index, "acquisition ", 0)
-        print('Average Precision = {} \
-              Precision score = {} Recall Score = {}'.format(average_precision, precision_score, recall_score))
-        print ("AUC Negative Class = {}, AUC Positive Class ={} ".format(auc[0], auc[1]))
-
+        # test_dropout_slices = np.delete(test_dropout_slices, (acquired_list))
+        #
+        #
+        # unlabeled_slices =np.concatenate([unlabeled_slices, test_dropout_slices])
+        # print (initial_labeled_slices)
+        # training_Generator = DataGenerator(initial_labeled_slices, oversampler=SMOTE(random_state=0), **train_params)
+        # model = net(input_shape, filters=nb_filters
+        #             , kernel_size=kernel_size, maxpool=pool_size)
+        #
+        # history = model.fit_myGenerator(training_Generator, nb_epochs=nb_epoch)
+        # #performance evaluation metric for each experiment
+        # All_auc = list()  #Receiver Operator Characteristic data
+        # All_fpr = list()  # all false positive rates
+        # All_tpr = list()  # all true positive rates
+        # All_pre = list()
+        # All_rec = list()
+        # All_ap = list()
+        # All_recall_score = list()
+        # All_precision_score = list()
+        #
+        # testing_Generator = DataGenerator(test_slices, oversampler=None, **test_params)
+        # X_Test, Y_Test = get_Xy_generator_data(testing_Generator)
+        # Y_Predicted = model.pred(X_Test, batch_size=128)
+        #
+        # #collect statistics of performance
+        # y_reversed = np.argmax(Y_Test, axis=1)
+        # y_score = np.argmax(Y_Predicted, axis =1)
+        #
+        # fpr = dict()
+        # tpr = dict()
+        # auc = dict()
+        # #collect statistics for the two classes
+        # for ci in range(nb_classes):
+        #     fpr[ci], tpr[ci], _ =  metrics.roc_curve(Y_Test[:, ci], Y_Predicted[:, ci])
+        #     auc[ci] = metrics.auc(fpr[ci], tpr[ci])
+        #
+        #
+        # precision_score = metrics.precision_score(y_reversed, y_score)
+        # recall_score = metrics.recall_score(y_reversed, y_score)
+        # precision, recall, _ = metrics.precision_recall_curve(y_reversed, y_score, pos_label = 1)
+        # average_precision = metrics.average_precision_score(y_reversed, y_score)
+        # print ("Experiment ", experiment_index, "acquisition ", 0)
+        # print('Average Precision = {} \
+        #       Precision score = {} Recall Score = {}'.format(average_precision, precision_score, recall_score))
+        # print ("AUC Negative Class = {}, AUC Positive Class ={} ".format(auc[0], auc[1]))
+        #
 
         # print (test_dropout_slices)
 
