@@ -265,10 +265,10 @@ for experiment_index in range(n_experiments):
         #
         # print (test_dropout_slices)
         test_dropout_slices = np.delete(test_dropout_slices, (acquired_list))
-        print (test_dropout_slices)
+
 
         unlabeled_slices =np.concatenate([unlabeled_slices, test_dropout_slices])
-
+        print (initial_labeled_slices)
         training_Generator = DataGenerator(initial_labeled_slices, oversampler=SMOTE(random_state=0), **train_params)
         model = net(input_shape, filters=nb_filters
                     , kernel_size=kernel_size, maxpool=pool_size)
