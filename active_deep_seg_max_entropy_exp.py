@@ -100,6 +100,7 @@ class DataGenerator(keras.utils.Sequence):
             except:
                 return self.__get_channel_shape(theX, theY)
         else:
+
             return self.__get_channel_shape(theX, theY)
 
 
@@ -141,13 +142,13 @@ pool_size = 3
 # convolution kernel size
 kernel_size = 4
 
-nb_epoch = 10
+nb_epoch = 100
 
-acquisition_iterations = 1 # number of aquisitions from unlabeled samples
+acquisition_iterations = 20 # number of aquisitions from unlabeled samples
 
-dropout_iterations = 20  # number of dropout ROUNDS for uncertainty estimation
+dropout_iterations = 30  # number of dropout ROUNDS for uncertainty estimation
 
-active_query_batch = 4  # number to added to the training data after active score evaluation
+active_query_batch = 6  # number to added to the training data after active score evaluation
 # All unlabeled samples could be considered
 
 X_Train_percent = .01  # initial train percent from the entire training set
@@ -256,18 +257,63 @@ for experiment_index in range(n_experiments):
 
         # add to the list of labeled
         initial_labeled_slices =np.concatenate([initial_labeled_slices, acquired_list])
+        # print (initial_labeled_slices)
 
-        unlabeled_slices = delete_sub_array(unlabeled_slices, test_dropout_slices)
+        unlabeled_slices = np.delete(unlabeled_slices, (test_dropout_slices))
 
-        print ('length of unlabed ',len(unlabeled_slices), len(test_dropout_slices))
+        # print ('length of unlabed ',len(unlabeled_slices), len(test_dropout_slices))
         #
-        print (test_dropout_slices)
-        test_dropout_slices = delete_sub_array(test_dropout_slices, acquired_list)
+        # print (test_dropout_slices)
+        test_dropout_slices = np.delete(test_dropout_slices, (acquired_list))
         print (test_dropout_slices)
 
         unlabeled_slices =np.concatenate([unlabeled_slices, test_dropout_slices])
 
+        training_Generator = DataGenerator(initial_labeled_slices, oversampler=SMOTE(random_state=0), **train_params)
+        model = net(input_shape, filters=nb_filters
+                    , kernel_size=kernel_size, maxpool=pool_size)
+
+        history = model.fit_myGenerator(training_Generator, nb_epochs=nb_epoch)
+        #performance evaluation metric for each experiment
+        All_auc = list()  #Receiver Operator Characteristic data
+        All_fpr = list()  # all false positive rates
+        All_tpr = list()  # all true positive rates
+        All_pre = list()
+        All_rec = list()
+        All_ap = list()
+        All_recall_score = list()
+        All_precision_score = list()
+
+        testing_Generator = DataGenerator(test_slices, oversampler=None, **test_params)
+        X_Test, Y_Test = get_Xy_generator_data(testing_Generator)
+        Y_Predicted = model.pred(X_Test, batch_size=128)
+
+        #collect statistics of performance
+        y_reversed = np.argmax(Y_Test, axis=1)
+        y_score = np.argmax(Y_Predicted, axis =1)
+
+        fpr = dict()
+        tpr = dict()
+        auc = dict()
+        #collect statistics for the two classes
+        for ci in range(nb_classes):
+            fpr[ci], tpr[ci], _ =  metrics.roc_curve(Y_Test[:, ci], Y_Predicted[:, ci])
+            auc[ci] = metrics.auc(fpr[ci], tpr[ci])
+
+
+        precision_score = metrics.precision_score(y_reversed, y_score)
+        recall_score = metrics.recall_score(y_reversed, y_score)
+        precision, recall, _ = metrics.precision_recall_curve(y_reversed, y_score, pos_label = 1)
+        average_precision = metrics.average_precision_score(y_reversed, y_score)
+        print ("Experiment ", experiment_index, "acquisition ", 0)
+        print('Average Precision = {} \
+              Precision score = {} Recall Score = {}'.format(average_precision, precision_score, recall_score))
+        print ("AUC Negative Class = {}, AUC Positive Class ={} ".format(auc[0], auc[1]))
+
+
         # print (test_dropout_slices)
+
+
         # print (len(test_dropout_slices))
         # # # what whats left to the unlabeled_slices
         # # unlabeled_slices = np.concatenate([unlabeled_slices, test_dropout_slices])
