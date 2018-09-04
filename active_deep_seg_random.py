@@ -47,7 +47,7 @@ nb_pool = 3
 # convolution kernel size
 nb_conv = 4
 
-nb_epoch = 50
+nb_epoch = 5
 
 acquisition_iterations = 30 # number of aquisitions from unlabeled samples
 
@@ -62,7 +62,7 @@ x_val_percent = .5  # of leftovers
 pool_batch_samples = 100  #Number to sample from the Pool for dropout evaluation
 
 img_dim = img_rows * img_cols  #flattened image dimension
-# all_files = all_files[:6]
+all_files = all_files[:3]
 XY_Data = fetch_data(all_files, 0)
 
 
@@ -114,6 +114,7 @@ for train_index, test_index in sss:
         verbose=1,
         validation_data=(X_Valid, Y_Valid))
 
+    # model.save_weights("./saved_models/"+currentScript+"model_0.h5")
     #collect statistics of performance
     y_predicted = model.predict(X_Test, batch_size=batch_size)
     y_reversed = np.argmax(Y_Test, axis=1)
@@ -172,6 +173,7 @@ for train_index, test_index in sss:
             verbose=1,
             validation_data=(X_Valid, Y_Valid))
 
+        # model.save_weights("./saved_models/"+currentScript+"model_"+str(i+1)+".h5")
         #collect statistics of performance
         y_predicted = model.predict(X_Test, batch_size=batch_size)
         y_reversed = np.argmax(Y_Test, axis=1)
@@ -204,10 +206,6 @@ for train_index, test_index in sss:
 
     np.save('./Results/' + currentScript + '_AUC_Experiment_' + str(e) +
             '.npy', All_auc)
-    np.save('./Results/' + currentScript + '_FPR_Experiment_' + str(e) +
-            '.npy', All_fpr)
-    np.save('./Results/' + currentScript + '_TPR_Experiment_' + str(e) +
-            '.npy', All_tpr)
     np.save('./Results/' + currentScript + '_PRE_Experiment_' + str(e) +
             '.npy', All_pre)
     np.save('./Results/' + currentScript + '_REC_Experiment_' + str(e) +
