@@ -62,7 +62,7 @@ x_val_percent = .5  # of leftovers
 pool_batch_samples = 100  #Number to sample from the Pool for dropout evaluation
 
 img_dim = img_rows * img_cols  #flattened image dimension
-all_files = all_files[:3]
+# all_files = all_files[:3]
 XY_Data = fetch_data(all_files, 0)
 
 
