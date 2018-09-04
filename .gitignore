@@ -6,3 +6,5 @@
 *.ipynb_checkpoints/
 *.pyc/
 /__pycashe__/
+/saved_models/
+/Results/
