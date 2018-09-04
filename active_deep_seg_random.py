@@ -72,7 +72,7 @@ y = XY_Data[:, img_dim]
 sss = StratifiedShuffleSplit(y, n_experiments, test_size=0.33, random_state=0)
 
 # Number of times to perform experiments... Note this is different from the epoch
-e = 2 #starting experiment number
+e = 0 #starting experiment number
 for train_index, test_index in sss:
     # the data, split between train and test sets
     X_Train_all, X_Test = X[train_index], X[test_index]
