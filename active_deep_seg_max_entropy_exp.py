@@ -262,6 +262,8 @@ for experiment_index in range(n_experiments):
         # print (initial_labeled_slices)
         print (len(unlabeled_slices), len(np.unique(unlabeled_slices)), len(test_dropout_slices))
         print ((unlabeled_slices))
+
+
         unlabeled_slices = np.delete(unlabeled_slices, (test_dropout_slices))
         print (len(unlabeled_slices))
         print (unlabeled_slices)
