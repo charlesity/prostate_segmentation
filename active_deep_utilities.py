@@ -1,5 +1,6 @@
 import numpy as np
 from keras.utils import np_utils, generic_utils
+from scipy.sparse import load_npz
 
 '''
 	Splits the train data into sub-arrays of Train, Val and Unlabeled Pool
@@ -19,9 +20,9 @@ def split_train_X_pool(X_Train_all, Y_Train_all, img_rows, img_cols, nb_classes,
 
     X_Train = np.concatenate((X_Train_pos, X_Train_neg), axis=0)  #form the X train data
     Y_Train = np.concatenate((Y_Train_neg, Y_Train_pos), axis=0)  #form Y train data
-    
+
     X_Pool_neg = X_Train_all[idx_negatives[train_num_half:], :, :, :]   #the remaining negative dataset is the negative pool
-    Y_Pool_neg = Y_Train_all[idx_negatives[train_num_half:]]             
+    Y_Pool_neg = Y_Train_all[idx_negatives[train_num_half:]]
 
     X_Pool_pos = X_Train_all[idx_positives[train_num_half:], :, :, :]   # the remaining positive dataset is the positive pool
     Y_Pool_pos = Y_Train_all[idx_positives[train_num_half:]]
@@ -64,7 +65,7 @@ def split_train(X_Train_all, Y_Train_all, img_rows, img_cols, nb_classes, X_Trai
 
     X_Valid_pos = X_Train_all[idx_positives[val_pos_start_index:
                                             val_pos_end_index], :, :, :]  #pick positive validation set
-    Y_Valid_pos = Y_Train_all[idx_positives[val_pos_start_index:			
+    Y_Valid_pos = Y_Train_all[idx_positives[val_pos_start_index:
                                             val_pos_end_index]]
 
     X_Valid_neg = X_Train_all[idx_negatives[val_pos_start_index:			#pick negative validation set
@@ -74,11 +75,11 @@ def split_train(X_Train_all, Y_Train_all, img_rows, img_cols, nb_classes, X_Trai
 
     X_Valid = np.concatenate((X_Valid_pos, X_Valid_neg), axis=0)    # form validation set
     Y_Valid = np.concatenate((Y_Valid_pos, Y_Valid_neg), axis=0)
-    # print('X_Valid and Y_Valid shapes ', X_Valid.shape, Y_Valid.shape)	
+    # print('X_Valid and Y_Valid shapes ', X_Valid.shape, Y_Valid.shape)
     # print('Distribution of Y_Valid Classes:', np.bincount(Y_Valid.reshape(-1).astype(np.int)))
 
     X_Pool_neg = X_Train_all[idx_negatives[val_pos_end_index:], :, :, :]   #the remaining negative dataset is the negative pool
-    Y_Pool_neg = Y_Train_all[idx_negatives[val_pos_end_index:]]  			
+    Y_Pool_neg = Y_Train_all[idx_negatives[val_pos_end_index:]]
 
     X_Pool_pos = X_Train_all[idx_positives[val_pos_end_index:], :, :, :]   # the remaining positive dataset is the positive pool
     Y_Pool_pos = Y_Train_all[idx_positives[val_pos_end_index:]]
@@ -128,7 +129,7 @@ def split_train_ratio_based(X_Train_all, Y_Train_all, img_rows, img_cols, nb_cla
 
     X_Valid_pos = X_Train_all[idx_positives[val_pos_start_index:
                                             val_pos_end_index], :, :, :]  #pick positive validation set
-    Y_Valid_pos = Y_Train_all[idx_positives[val_pos_start_index:            
+    Y_Valid_pos = Y_Train_all[idx_positives[val_pos_start_index:
                                             val_pos_end_index]]
 
     X_Valid_neg = X_Train_all[idx_negatives[val_pos_start_index:            #pick negative validation set
@@ -138,11 +139,11 @@ def split_train_ratio_based(X_Train_all, Y_Train_all, img_rows, img_cols, nb_cla
 
     X_Valid = np.concatenate((X_Valid_pos, X_Valid_neg), axis=0)    # form validation set
     Y_Valid = np.concatenate((Y_Valid_pos, Y_Valid_neg), axis=0)
-    # print('X_Valid and Y_Valid shapes ', X_Valid.shape, Y_Valid.shape)    
+    # print('X_Valid and Y_Valid shapes ', X_Valid.shape, Y_Valid.shape)
     # print('Distribution of Y_Valid Classes:', np.bincount(Y_Valid.reshape(-1).astype(np.int)))
 
     X_Pool_neg = X_Train_all[idx_negatives[val_pos_end_index:], :, :, :]   #the remaining negative dataset is the negative pool
-    Y_Pool_neg = Y_Train_all[idx_negatives[val_pos_end_index:]]             
+    Y_Pool_neg = Y_Train_all[idx_negatives[val_pos_end_index:]]
 
     X_Pool_pos = X_Train_all[idx_positives[val_pos_end_index:], :, :, :]   # the remaining positive dataset is the positive pool
     Y_Pool_pos = Y_Train_all[idx_positives[val_pos_end_index:]]
@@ -163,27 +164,29 @@ def split_train_ratio_based(X_Train_all, Y_Train_all, img_rows, img_cols, nb_cla
 
 
 def fetch_data(files, slice_range):
-    #randomly pick test_percent of folders
-    num = len(files)
-    XY_Data = list()
 
-    for f in files:
-        Xy_tr = np.load(f)
-        trimed_data = None
-        if slice_range != 0:
-            num_of_slices = Xy_tr[-1, 785]
-            start_slice = np.float(num_of_slices / 2) - np.floor(
-                slice_range / 2)
-            end_slice = start_slice + slice_range
-            start_indices = Xy_tr[:, 785] >= start_slice
-            end_indices = Xy_tr[:, 785] >= end_slice
-            intercept = start_indices & end_indices
-            trimed_data = Xy_tr[intercept]
-        else:
-            trimed_data = Xy_tr
-        if len(XY_Data) == 0:
-            XY_Data = trimed_data
-        else:
-            XY_Data = np.append(XY_Data, trimed_data, axis=0)
-    return XY_Data
+	 # randomly pick test_percent of folders
+	num = len(files)
+	XY_Data = list()
+	#
 
+	for f in files:
+		Xy_tr = load_npz(f)
+		Xy_tr= Xy_tr.toarray()
+		trimed_data = None
+		if slice_range != 0:
+		    num_of_slices = Xy_tr[-1, 785]
+		    start_slice = np.float(num_of_slices / 2) - np.floor(
+		        slice_range / 2)
+		    end_slice = start_slice + slice_range
+		    start_indices = Xy_tr[:, 785] >= start_slice
+		    end_indices = Xy_tr[:, 785] >= end_slice
+		    intercept = start_indices & end_indices
+		    trimed_data = Xy_tr[intercept]
+		else:
+		    trimed_data = Xy_tr
+		if len(XY_Data) == 0:
+		    XY_Data = trimed_data
+		else:
+			XY_Data = np.append(XY_Data, trimed_data, axis=0)
+	return XY_Data

@@ -32,8 +32,8 @@ import os
 
 
 currentScript = os.path.splitext(__file__)[0]  #to collect performance data
-data_files = '.'
-all_files = glob.glob(data_files + '/*.npy')
+data_files = './dataset/'
+all_files = glob.glob(data_files + '/*.npz')
 all_files = all_files  #load the number of folders indicated in the slice.... loading all will require more memory
 
 n_experiments = 3  # number of experiments
@@ -41,7 +41,7 @@ batch_size = 128
 nb_classes = 2
 
 # input image dimensions
-img_rows, img_cols = 28, 28
+img_rows, img_cols = 60, 60
 
 nb_filters = 32
 # size of pooling area for max pooling
@@ -49,9 +49,9 @@ nb_pool = 3
 # convolution kernel size
 nb_conv = 4
 
-nb_epoch = 100
+nb_epoch = 50
 
-acquisition_iterations = 50 # number of aquisitions from unlabeled samples
+acquisition_iterations = 30 # number of aquisitions from unlabeled samples
 
 dropout_iterations = 20  # number of dropout ROUNDS for uncertainty estimation
 
@@ -64,10 +64,13 @@ x_val_percent = .5  # of leftovers
 pool_batch_samples = 100  #Number to sample from the Pool for dropout evaluation
 
 img_dim = img_rows * img_cols  #flattened image dimension
-
+# all_files = all_files[:6]
 XY_Data = fetch_data(all_files, 0)
+
+
 X = XY_Data[:, :img_dim]
 y = XY_Data[:, img_dim]
+
 sss = StratifiedShuffleSplit(y, n_experiments, test_size=0.33, random_state=0)
 
 # Number of times to perform experiments... Note this is different from the epoch
@@ -95,8 +98,6 @@ for train_index, test_index in sss:
 
     #performance evaluation metric for each experiment
     All_auc = list()  #Receiver Operator Characteristic data
-    All_fpr = list()  # all false positive rates
-    All_tpr = list()  # all true positive rates
     All_pre = list()
     All_rec = list()
     All_ap = list()
@@ -114,7 +115,7 @@ for train_index, test_index in sss:
         show_accuracy=True,
         verbose=1,
         validation_data=(X_Valid, Y_Valid))
-    
+
     #collect statistics of performance
     y_predicted = model.predict(X_Test, batch_size=batch_size)
     y_reversed = np.argmax(Y_Test, axis=1)
@@ -134,10 +135,8 @@ for train_index, test_index in sss:
     average_precision = metrics.average_precision_score(y_reversed, y_score)
     print ("Experiment ", e, "acquisition ", 0)
     print('Average Precision', average_precision, "precision score", precision_score, "recall score ", recall_score)
-
+    print ('AUC', auc)
     All_auc.append(auc)
-    All_fpr.append(fpr)
-    All_tpr.append(tpr)
     All_pre.append(precision)
     All_rec.append(recall)
     All_ap.append(average_precision)
@@ -148,18 +147,15 @@ for train_index, test_index in sss:
 
     for i in range(acquisition_iterations):
         print('POOLING ITERATION', i)
-
-
-
         X_Pool_index = np.asarray(random.sample(range(0, pool_batch_samples), active_query_batch))
 
         Pooled_X = X_Pool[X_Pool_index, :, :, :]
         Pooled_Y = Y_Pool[X_Pool_index]
 
         # Delete the pool set from X_Pool
-        X_Pool = np.delete(X_Pool, (X_Pool_index), axis=0)		
-        Y_Pool = np.delete(Y_Pool, (X_Pool_index), axis=0)  
-	
+        X_Pool = np.delete(X_Pool, (X_Pool_index), axis=0)
+        Y_Pool = np.delete(Y_Pool, (X_Pool_index), axis=0)
+
 
         X_Train = np.concatenate((X_Train, Pooled_X), axis=0)
         Y_Train = np.concatenate((Y_Train, Pooled_Y), axis=0)
@@ -197,10 +193,9 @@ for train_index, test_index in sss:
         average_precision = metrics.average_precision_score(y_reversed, y_score)
         print ("Experiment ", e, "acquisition ", i)
         print('Average Precision', average_precision, "precision score", precision_score, "recall score ", recall_score)
+        print ('AUC', auc)
 
         All_auc.append(auc)
-        All_fpr.append(fpr)
-        All_tpr.append(tpr)
         All_pre.append(precision)
         All_rec.append(recall)
         All_ap.append(average_precision)
@@ -231,4 +226,3 @@ for train_index, test_index in sss:
     e += 1
     if (e >= n_experiments ):
         break
-
