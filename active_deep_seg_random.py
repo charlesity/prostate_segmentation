@@ -47,7 +47,7 @@ nb_pool = 3
 # convolution kernel size
 nb_conv = 4
 
-nb_epoch = 5
+nb_epoch = 50
 
 acquisition_iterations = 30 # number of aquisitions from unlabeled samples
 
