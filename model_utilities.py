@@ -20,7 +20,7 @@ def build_model(nb_filters, nb_conv, nb_pool, input_shape, nb_classes, train_num
     model.add(Convolution2D(nb_filters, nb_conv, nb_conv))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(nb_pool, nb_pool)))
-    model.add(Dropout(0.25))
+    model.add(Dropout(0.5))
 
     c = 3.5
     Weight_Decay = c / float(train_num)
@@ -32,5 +32,3 @@ def build_model(nb_filters, nb_conv, nb_pool, input_shape, nb_classes, train_num
     model.add(Activation('softmax'))
 
     return model
-
-
