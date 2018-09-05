@@ -32,7 +32,7 @@ def resize_dataset(file, test_percent = .33, previous_shape =(160,160), image_si
         im[im==im.min()] = None
         im = resize(im, image_size, mode ='constant', preserve_range=True)
         im[np.isnan(im)] = -1
-        im = im + 1
+        # im = im + 1
         im = Normalizer().fit_transform(im)
         # plt.imshow(im)
         # plt.show()pyth
