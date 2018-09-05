@@ -4,9 +4,6 @@ from __future__ import print_function
 import warnings
 warnings.filterwarnings("ignore")
 
-
-from keras.datasets import mnist
-from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation, Flatten
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
