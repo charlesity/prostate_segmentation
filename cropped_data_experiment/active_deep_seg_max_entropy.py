@@ -140,20 +140,20 @@ def run():
 
         if oversample:
             X_Train = X_Train.reshape((X_Train.shape[0], img_rows**2))
-            print (X_Train.shape)
+            # print (X_Train.shape)
 
             Y_Train = np.argmax(Y_Train, axis=1)
-            print (Y_Train)
+            # print (Y_Train)
             min_class_num =np.min(np.bincount(Y_Train.reshape(-1).astype(np.int)))
             if min_class_num < 4:
-                print ("Random balancer")
+                # print ("Random balancer")
                 X_Train, Y_Train =random_balancer.fit_sample(X_Train, Y_Train)
             else:
                 X_Train, Y_Train = smote_balancer.fit_sample(X_Train, Y_Train)
-                print ("Random balancer")
-            print (Y_Train)
+                # print ("Smote balancer")
+            # print (Y_Train)
 
-            print (X_Train.shape)
+            # print (X_Train.shape)
             # print (Y_Train)
             #reshape it back and continue
             X_Train= X_Train.reshape((X_Train.shape[0], 1, img_rows, img_cols ))
