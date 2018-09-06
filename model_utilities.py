@@ -28,6 +28,9 @@ def build_model(nb_filters, nb_conv, nb_pool, input_shape, nb_classes, train_num
     model.add(Dense(128, W_regularizer=l2(Weight_Decay)))
     model.add(Activation('relu'))
     model.add(Dropout(0.5))
+    model.add(Dense(128, W_regularizer=l2(Weight_Decay)))
+    model.add(Activation('relu'))
+    model.add(Dropout(0.5))
     model.add(Dense(nb_classes))
     model.add(Activation('softmax'))
 
