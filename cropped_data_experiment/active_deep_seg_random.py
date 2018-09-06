@@ -121,7 +121,7 @@ def run():
         input_shape = (1, img_rows, img_cols)
 
         #split train set into train, val, and unlabeled pool
-        X_Train, Y_Train, X_Valid, Y_Valid, X_Pool, Y_Pool = split_train_ratio_based(X_Train_all, Y_Train_all, img_rows = img_rows, img_cols =img_cols, nb_classes= nb_classes,
+        X_Train, Y_Train, X_Valid, Y_Valid, X_Pool, Y_Pool = split_train(X_Train_all, Y_Train_all, img_rows = img_rows, img_cols =img_cols, nb_classes= nb_classes,
          X_Train_percent = X_Train_percent, val_percent =x_val_percent)
 
 

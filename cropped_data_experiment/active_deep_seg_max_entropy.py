@@ -276,7 +276,7 @@ def run():
             X_Pool = np.concatenate((X_Pool, X_Pool_Dropout), axis=0)
             Y_Pool = np.concatenate((Y_Pool, Y_Pool_Dropout), axis=0)
 
-            
+
             X_Train = np.concatenate((X_Train, Pooled_X), axis=0)
             Y_Train = np.concatenate((Y_Train, Pooled_Y), axis=0)
 
