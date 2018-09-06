@@ -81,7 +81,7 @@ def run():
 
     acquisition_iterations = 30 # number of aquisitions from unlabeled samples
 
-    dropout_iterations = 20  # number of dropout ROUNDS for uncertainty estimation
+    dropout_iterations = 5  # number of dropout ROUNDS for uncertainty estimation
 
     active_query_batch = 60  # number to added to the training data after active score evaluation
     # All unlabeled samples could be considered
@@ -93,7 +93,7 @@ def run():
 
     img_dim = img_rows * img_cols  #flattened image dimension
     # all_files = all_files[:3]
-    XY_Data = fetch_data(all_files, 0)
+    XY_Data = fetch_data(all_files, slice_range)
 
 
     X = XY_Data[:, :img_dim]
@@ -120,7 +120,7 @@ def run():
 
         input_shape = (1, img_rows, img_cols)
         #split train set into train, val, and unlabeled pool
-        X_Train, Y_Train, X_Valid, Y_Valid, X_Pool, Y_Pool = split_train_ratio_based(X_Train_all, Y_Train_all, img_rows = img_rows, img_cols =img_cols, nb_classes= nb_classes,
+        X_Train, Y_Train, X_Pool, Y_Pool = split_train_ratio_based(X_Train_all, Y_Train_all, img_rows = img_rows, img_cols =img_cols, nb_classes= nb_classes,
          X_Train_percent = X_Train_percent, val_percent =x_val_percent)
 
 
@@ -144,8 +144,7 @@ def run():
             batch_size=batch_size,
             nb_epoch=nb_epoch,
             show_accuracy=True,
-            verbose=1,
-            validation_data=(X_Valid, Y_Valid))
+            verbose=1)
 
         #collect statistics of performance
         y_predicted = model.predict(X_Test, batch_size=batch_size)
@@ -184,9 +183,14 @@ def run():
 
             # pool_subset = len(X_Pool) # the remaining unlabeled set
             pool_subset = pool_batch_samples  # sample just the given number.... usually we should sample from all the remaining unlabeled set
-            pool_subset_dropout = np.asarray(
-                random.sample(range(0, X_Pool.shape[0]),
-                              pool_subset))  # sample a subset of unlabeled set
+            if X_Pool.shape[0] <= pool_subset:
+                pool_subset_dropout = np.asarray(random.sample(range(0, X_Pool.shape[0]),
+                              X_Pool.shape[0]))  # sample a subset of unlabeled set
+            else:
+                pool_subset_dropout = np.asarray(random.sample(range(0, X_Pool.shape[0]),
+                                                               pool_subset))  # sample a subset of unlabeled set
+
+
             X_Pool_Dropout = X_Pool[
                 pool_subset_dropout, :, :, :]  #sample a subset of unlabeled set
             Y_Pool_Dropout = Y_Pool[
@@ -237,15 +241,19 @@ def run():
             #then add back the random pool subset with pooled points deleted back to the X_Pool set
             # delete_Pool_X = np.delete(X_Pool, (pool_subset_dropout), axis=0)
             # delete_Pool_Y = np.delete(Y_Pool, (pool_subset_dropout), axis=0)
-
+            print (pool_subset_dropout.shape, "size of subset dropout")
+            print (X_Pool.shape, "X_Pool before delete")
             X_Pool = np.delete(X_Pool, (pool_subset_dropout), axis=0)
             Y_Pool = np.delete(Y_Pool, (pool_subset_dropout), axis=0)
-
+            print (X_Pool.shape, "X_Pool After delete")
+            print (X_Pool_Dropout.shape, "X_Pool_Droput  Before delete")
             #delete from selected items from the dropout pool
             X_Pool_Dropout = np.delete(
                 X_Pool_Dropout, (X_Pool_index), axis=0)
             Y_Pool_Dropout = np.delete(
                 Y_Pool_Dropout, (X_Pool_index), axis=0)
+
+            print (X_Pool_Dropout.shape, "X_Pool_Droput  Before delete")
 
     		# delete_Pool_X_Dropout = np.delete(X_Pool_Dropout, (X_Pool_index), axis=0)
       		# delete_Pool_Y_Dropout = np.delete(Y_Pool_Dropout, (X_Pool_index), axis=0)
@@ -256,11 +264,13 @@ def run():
             X_Pool = np.concatenate((X_Pool, X_Pool_Dropout), axis=0)
             Y_Pool = np.concatenate((Y_Pool, Y_Pool_Dropout), axis=0)
 
+            print (X_Pool.shape, "X_Pool left")
 
             X_Train = np.concatenate((X_Train, Pooled_X), axis=0)
             Y_Train = np.concatenate((Y_Train, Pooled_Y), axis=0)
 
             if oversample:
+                print ("Oversamplying")
                 X_Train = X_Train.reshape((X_Train.shape[0], img_rows**2))
                 # print (X_Train.shape)
 
@@ -290,8 +300,7 @@ def run():
                 batch_size=batch_size,
                 nb_epoch=nb_epoch,
                 show_accuracy=True,
-                verbose=1,
-                validation_data=(X_Valid, Y_Valid))
+                verbose=1)
 
             #collect statistics of performance
             y_predicted = model.predict(X_Test, batch_size=batch_size)
@@ -341,7 +350,9 @@ if __name__ == "__main__":
         parser = argparse.ArgumentParser()
         parser.add_argument("-ds_type", "--dataset_type", help=" 0 => '0 Background',  -1 -> '=1 Background', scaled_negative => 'Scaled negative background'")
         parser.add_argument("-ovs", "--oversampled", help ="Oversampled training",  action="store_true")
+        parser.add_argument("-sr", "--slice_range", help="Number of subset to consider", default=6, type = int)
         args = parser.parse_args()
         dataset_type = args.dataset_type
         oversample =args.oversampled
+        slice_range = args.slice_range
         run()

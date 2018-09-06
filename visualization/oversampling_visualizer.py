@@ -118,10 +118,11 @@ if __name__ == "__main__":
     parser.add_argument("dataset_type", help=" 0 => '0 Background',  -1 -> '=1 Background', scaled_negative => 'Scaled negative background'")
     parser.add_argument("slice_num_feat",help="True => 'Use slice number as feature', False => 'Dont use slice number as feature'", type = bool)
     parser.add_argument("subset_no", help="Number of subset to consider", type = int)
-    parser.add_argument("slice_range", help="Number of subset to consider", type = int)
+    parser.add_argument("-sr", "--slice_range", help="Number of subset to consider", type = int, default=6)
     args = parser.parse_args()
     subset = args.subset_no
     slice_number_feature = args.slice_num_feat
     dataset_type = args.dataset_type
     slice_range = args.slice_range
+    print (slice_range)
     run()
