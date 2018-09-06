@@ -163,7 +163,7 @@ def split_train_ratio_based(X_Train_all, Y_Train_all, img_rows, img_cols, nb_cla
     return X_Train, Y_Train, X_Valid, Y_Valid, X_Pool, Y_Pool
 
 
-def fetch_data(files, slice_range):
+def fetch_data(files, slice_range, img_dim = (40, 40)):
 
 	 # randomly pick test_percent of folders
 	num = len(files)
@@ -175,14 +175,15 @@ def fetch_data(files, slice_range):
 		Xy_tr= Xy_tr.toarray()
 		trimed_data = None
 		if slice_range != 0:
-		    num_of_slices = Xy_tr[-1, 785]
-		    start_slice = np.float(num_of_slices / 2) - np.floor(
-		        slice_range / 2)
-		    end_slice = start_slice + slice_range
-		    start_indices = Xy_tr[:, 785] >= start_slice
-		    end_indices = Xy_tr[:, 785] >= end_slice
-		    intercept = start_indices & end_indices
-		    trimed_data = Xy_tr[intercept]
+			#obtain the total number of slices within a patient folder
+			num_of_slices = Xy_tr[-1, ((img_dim[0]**2)+1)]
+			start_slice = np.float(num_of_slices / 2) - np.floor(
+			    slice_range / 2)
+			end_slice = start_slice + slice_range
+			start_indices = Xy_tr[:, ((img_dim[0]**2)+1)] >= start_slice
+			end_indices = Xy_tr[:, ((img_dim[0]**2)+1)] >= end_slice
+			intercept = start_indices & end_indices
+			trimed_data = Xy_tr[intercept]
 		else:
 		    trimed_data = Xy_tr
 		if len(XY_Data) == 0:
