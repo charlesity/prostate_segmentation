@@ -84,8 +84,8 @@ def visualize(X_in, y_in):
 def plot_results(models,
                  data,
                  batch_size=128,
-                 model_name="vae_mnist"):
-    """Plots labels and MNIST digits as function of 2-dim latent vector
+                 model_name="prostate_vae"):
+    """Plots labels and data as a function 2-dim latent vector
 
     # Arguments:
         models (tuple): encoder and decoder models
@@ -157,10 +157,10 @@ y = XY_Data[:, img_dim]
 slice_number_feature = False
 
 if slice_number_feature:
-    f_slice = np.array([1 if a/18 > 1 else a/18 for a in XY_Data[:, 785]]) 
+    f_slice = np.array([1 if a/18 > 1 else a/18 for a in XY_Data[:, 785]])
     X = np.c_[X, f_slice]
 
-random_shuffle = random.sample(range(0, X.shape[0]), X.shape[0]) 
+random_shuffle = random.sample(range(0, X.shape[0]), X.shape[0])
 
 
 X = X[random_shuffle[:subset]]
@@ -177,9 +177,9 @@ percent_test = .2
 
 num_train = int(X.shape[0]*(1-percent_test))
 
-random_set = random.sample(range(0, X.shape[0]), X.shape[0])  
+random_set = random.sample(range(0, X.shape[0]), X.shape[0])
 
-x_train, x_test = X[random_set[:num_train], :], X[random_set[num_train:], :] 
+x_train, x_test = X[random_set[:num_train], :], X[random_set[num_train:], :]
 y_train, y_test = y[random_set[:num_train]], y[random_set[num_train:]]
 
 
@@ -271,16 +271,19 @@ if __name__ == '__main__':
     help_ = "Load h5 model trained weights"
     parser.add_argument("-w", "--weights", help=help_)
     help_ = "Use mse loss instead of binary cross entropy (default)"
-    parser.add_argument("-m", "--mse", help=help_, action='store_true')
+    parser.add_argument("-m", "--mse"
+                        , help=help_, action='store_true')
+    parser.add_argument("-s", "--subset"
+                        , help="Subset to evaluate")
+    parser.add_argument("-ds_type", "--dataset_type",
+                        help=" 0 => '0 Background',  -1 -> '=1 Background', scaled_negative =>
+                        'Scaled negative background'")
+    parser.add_argument("-s", "--subset",help="Number of subset to consider", type = int)
     args = parser.parse_args()
-    models = (encoder, decoder)
-    
 
-    # VAE loss = mse_loss or xent_loss + kl_loss
-    if args.mse:
-        reconstruction_loss = mse(K.flatten(inputs), K.flatten(outputs))
-    else:
-        reconstruction_loss = binary_crossentropy(K.flatten(inputs),
+    models = (encoder, decoder)
+
+    reconstruction_loss = binary_crossentropy(K.flatten(inputs),
                                                   K.flatten(outputs))
 
     reconstruction_loss *= image_size * image_size
@@ -310,7 +313,4 @@ if __name__ == '__main__':
         if slice_number_feature:
             vae.save_weights('prostate_vae_extra_feature.h5')
         else:
-            vae.save_weights('prostate_vae_without_extra_feature.h5')          
-
-
-
+            vae.save_weights('prostate_vae_without_extra_feature.h5')
