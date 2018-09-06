@@ -61,6 +61,7 @@ def run():
         print ("Pass the appropriate argument for the type of dataset")
         quit()
     print (currentScript)
+    print (save_location)
 
 #     all_files = glob.glob(data_files)
 #     all_files = all_files  #load the number of folders indicated in the slice.... loading all will require more memory
