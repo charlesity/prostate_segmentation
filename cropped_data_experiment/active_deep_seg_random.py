@@ -217,70 +217,6 @@ def run():
             X_Train = np.concatenate((X_Train, Pooled_X), axis=0)
             Y_Train = np.concatenate((Y_Train, Pooled_Y), axis=0)
 
-            # convert class vectors to binary class matrices
-            Y_Train = np_utils.to_categorical(Y_Train, nb_classes)
-
-            model = build_model(nb_filters, nb_conv, nb_pool, input_shape, nb_classes, X_Train.shape[0], c_param = 3.5)
-            model.compile(loss='categorical_crossentropy', optimizer='adam')
-            model.fit(
-                X_Train,
-                Y_Train,
-                batch_size=batch_size,
-                nb_epoch=nb_epoch,
-                show_accuracy=True,
-                verbose=1,
-                validation_data=(X_Valid, Y_Valid))
-
-            # model.save_weights("./saved_models/"+currentScript+"model_"+str(i+1)+".h5")
-            #collect statistics of performance
-            y_predicted = model.predict(X_Test, batch_size=batch_size)
-            y_reversed = np.argmax(Y_Test, axis=1)
-            y_score = np.argmax(y_predicted, axis =1)
-
-            fpr = dict()
-            tpr = dict()
-            auc = dict()
-            #collect statistics for the two classes
-            for ci in range(nb_classes):
-                fpr[ci], tpr[ci], _ =  metrics.roc_curve(Y_Test[:, ci], y_predicted[:, ci])
-                auc[ci] = metrics.auc(fpr[ci], tpr[ci])
-
-            precision_score = metrics.precision_score(y_reversed, y_score)
-            recall_score = metrics.recall_score(y_reversed, y_score)
-            precision, recall, _ = metrics.precision_recall_curve(y_reversed, y_score, pos_label = 1)
-            average_precision = metrics.average_precision_score(y_reversed, y_score)
-            print ("Experiment ", e, "acquisition ", i)
-            print('Average Precision', average_precision, "precision score", precision_score, "recall score ", recall_score)
-            print ('AUC', auc)
-
-            All_auc.append(auc)
-            All_pre.append(precision)
-            All_rec.append(recall)
-            All_ap.append(average_precision)
-            All_recall_score.append(recall_score)
-            All_precision_score.append(precision_score)
-
-        print('Saving Results Per Experiment')
-
-        np.save('./Results/' + currentScript + '_AUC_Experiment_' + str(e) +
-                '.npy', All_auc)
-        np.save('./Results/' + currentScript + '_PRE_Experiment_' + str(e) +
-                '.npy', All_pre)
-        np.save('./Results/' + currentScript + '_REC_Experiment_' + str(e) +
-                '.npy', All_rec)
-        np.save(
-            './Results/' + currentScript+'_AVG_pre_' + str(e) + '.npy',
-            All_ap)
-        np.save(
-            './Results/' + currentScript+'_recall_score_' + str(e) + '.npy',
-            All_recall_score)
-        np.save('./Results/' + currentScript+'_precision_score_' + str(e) + '.npy',
-            All_precision_score)
-        print ("===================== Experiment number ",e+1, " completed======================== " )
-        e += 1
-        if (e >= n_experiments ):
-            break
-
             if oversample:
                 X_Train = X_Train.reshape((X_Train.shape[0], img_rows**2))
                 # print (X_Train.shape)
@@ -352,6 +288,7 @@ def run():
         np.save(save_location+'_AVG_pre_' + str(e) + '.npy', All_ap)
         np.save(save_location+'_recall_score_' + str(e) + '.npy', All_recall_score)
         np.save(save_location+'_precision_score_' + str(e) + '.npy', All_precision_score)
+        np.save(save_location+'_confusion_matrix' + str(e) + '.npy', All_confusion_matrix)
         print ("===================== Experiment number ",e+1, " completed======================== " )
         e += 1
         if (e >= n_experiments ):
