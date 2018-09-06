@@ -120,33 +120,14 @@ def split_train_ratio_based(X_Train_all, Y_Train_all, img_rows, img_cols, nb_cla
     # print('Distribution of Y_Train Classes:',
     #   np.bincount(Y_Train.reshape(-1).astype(np.int)))
 
-    left_over_after_xtrain_pos = idx_positives.shape[0] - train_num_half  #num remaining after picking positive samples for training set
-    left_over_after_xtrain_neg = idx_negatives.shape[0] - negatives_ratio #num remaining after picking negative samples for training set
-
-    val_pos_start_index = train_num_half  #calculate startng index for valication set
-    val_pos_end_index = val_pos_start_index + int(
-        left_over_after_xtrain_pos * val_percent)      # calculate end index for validation set
-
-    X_Valid_pos = X_Train_all[idx_positives[val_pos_start_index:
-                                            val_pos_end_index], :, :, :]  #pick positive validation set
-    Y_Valid_pos = Y_Train_all[idx_positives[val_pos_start_index:
-                                            val_pos_end_index]]
-
-    X_Valid_neg = X_Train_all[idx_negatives[val_pos_start_index:            #pick negative validation set
-                                            val_pos_end_index], :, :, :]
-    Y_Valid_neg = Y_Train_all[idx_negatives[val_pos_start_index:
-                                            val_pos_end_index]]
-
-    X_Valid = np.concatenate((X_Valid_pos, X_Valid_neg), axis=0)    # form validation set
-    Y_Valid = np.concatenate((Y_Valid_pos, Y_Valid_neg), axis=0)
     # print('X_Valid and Y_Valid shapes ', X_Valid.shape, Y_Valid.shape)
     # print('Distribution of Y_Valid Classes:', np.bincount(Y_Valid.reshape(-1).astype(np.int)))
 
-    X_Pool_neg = X_Train_all[idx_negatives[val_pos_end_index:], :, :, :]   #the remaining negative dataset is the negative pool
-    Y_Pool_neg = Y_Train_all[idx_negatives[val_pos_end_index:]]
+    X_Pool_neg = X_Train_all[idx_negatives[negatives_ratio:], :, :, :]   #the remaining negative dataset is the negative pool
+    Y_Pool_neg = Y_Train_all[idx_negatives[negatives_ratio:]]
 
-    X_Pool_pos = X_Train_all[idx_positives[val_pos_end_index:], :, :, :]   # the remaining positive dataset is the positive pool
-    Y_Pool_pos = Y_Train_all[idx_positives[val_pos_end_index:]]
+    X_Pool_pos = X_Train_all[idx_positives[train_num_half:], :, :, :]   # the remaining positive dataset is the positive pool
+    Y_Pool_pos = Y_Train_all[idx_positives[train_num_half:]]
 
     X_Pool = np.concatenate((X_Pool_neg, X_Pool_pos), axis=0)           # form x pool
     Y_Pool = np.concatenate((Y_Pool_neg, Y_Pool_pos), axis=0)           # form y pool
@@ -156,33 +137,32 @@ def split_train_ratio_based(X_Train_all, Y_Train_all, img_rows, img_cols, nb_cla
     #       np.bincount(Y_Pool.reshape(-1).astype(np.int)))
 
     #one -hot encode the vectors
-    Y_Valid = np_utils.to_categorical(Y_Valid, nb_classes)
     Y_Pool = np_utils.to_categorical(Y_Pool, nb_classes)
     Y_Train = np_utils.to_categorical(Y_Train, nb_classes)
 
-    return X_Train, Y_Train, X_Valid, Y_Valid, X_Pool, Y_Pool
+    return X_Train, Y_Train, X_Pool, Y_Pool
 
 
-def fetch_data(files, slice_range):
+def fetch_data(files, slice_range, img_dim = (40, 40)):
 
 	 # randomly pick test_percent of folders
 	num = len(files)
 	XY_Data = list()
 	#
-
 	for f in files:
 		Xy_tr = load_npz(f)
 		Xy_tr= Xy_tr.toarray()
 		trimed_data = None
 		if slice_range != 0:
-		    num_of_slices = Xy_tr[-1, 785]
-		    start_slice = np.float(num_of_slices / 2) - np.floor(
-		        slice_range / 2)
-		    end_slice = start_slice + slice_range
-		    start_indices = Xy_tr[:, 785] >= start_slice
-		    end_indices = Xy_tr[:, 785] >= end_slice
-		    intercept = start_indices & end_indices
-		    trimed_data = Xy_tr[intercept]
+			#obtain the total number of slices within a patient folder
+			num_of_slices = Xy_tr[-1, ((img_dim[0]**2)+1)]
+			start_slice = np.float(num_of_slices / 2) - np.floor(
+			    slice_range / 2)
+			end_slice = start_slice + slice_range
+			start_indices = Xy_tr[:, ((img_dim[0]**2)+1)] >= start_slice
+			end_indices = Xy_tr[:, ((img_dim[0]**2)+1)] >= end_slice
+			intercept = start_indices & end_indices
+			trimed_data = Xy_tr[intercept]
 		else:
 		    trimed_data = Xy_tr
 		if len(XY_Data) == 0:

@@ -82,7 +82,7 @@ def run():
 
     acquisition_iterations = 30 # number of aquisitions from unlabeled samples
 
-    dropout_iterations = 20  # number of dropout ROUNDS for uncertainty estimation
+    dropout_iterations = 5  # number of dropout ROUNDS for uncertainty estimation
 
     active_query_batch = 60  # number to added to the training data after active score evaluation
     # All unlabeled samples could be considered
@@ -94,7 +94,7 @@ def run():
 
     img_dim = img_rows * img_cols  #flattened image dimension
     # all_files = all_files[:3]
-    XY_Data = fetch_data(all_files, 0)
+    XY_Data = fetch_data(all_files, slice_range)
 
 
     X = XY_Data[:, :img_dim]
@@ -112,18 +112,19 @@ def run():
 
     	# if K.image_data_format() == 'channels_first':
     	#reshape to appropriate backend format
-
         X_Train_all = X_Train_all.reshape(X_Train_all.shape[0], 1, img_rows,
                                           img_cols)
-
-
         X_Test = X_Test.reshape(X_Test.shape[0], 1, img_rows, img_cols)
         Y_Test = np_utils.to_categorical(Y_Test, nb_classes)	#one hot encode Y_Test
-        input_shape = (1, img_rows, img_cols)
 
+
+
+        input_shape = (1, img_rows, img_cols)
         #split train set into train, val, and unlabeled pool
-        X_Train, Y_Train, X_Valid, Y_Valid, X_Pool, Y_Pool = split_train_ratio_based(X_Train_all, Y_Train_all, img_rows = img_rows, img_cols =img_cols, nb_classes= nb_classes,
+        X_Train, Y_Train, X_Pool, Y_Pool = split_train_ratio_based(X_Train_all, Y_Train_all, img_rows = img_rows, img_cols =img_cols, nb_classes= nb_classes,
          X_Train_percent = X_Train_percent, val_percent =x_val_percent)
+
+
 
         #performance evaluation metric for each experiment
         All_auc = list()  #Receiver Operator Characteristic data
@@ -138,35 +139,13 @@ def run():
         model = build_model(nb_filters, nb_conv, nb_pool, input_shape, nb_classes, X_Train.shape[0], c_param = 3.5)
         model.compile(loss='categorical_crossentropy', optimizer='adam')
 
-        if oversample:
-            X_Train = X_Train.reshape((X_Train.shape[0], img_rows**2))
-            # print (X_Train.shape)
-
-            Y_Train = np.argmax(Y_Train, axis=1)
-            # print (Y_Train)
-            min_class_num =np.min(np.bincount(Y_Train.reshape(-1).astype(np.int)))
-            if min_class_num < 4:
-                # print ("Random balancer")
-                X_Train, Y_Train =random_balancer.fit_sample(X_Train, Y_Train)
-            else:
-                X_Train, Y_Train = smote_balancer.fit_sample(X_Train, Y_Train)
-                # print ("Smote balancer")
-            # print (Y_Train)
-
-            # print (X_Train.shape)
-            # print (Y_Train)
-            #reshape it back and continue
-            X_Train= X_Train.reshape((X_Train.shape[0], 1, img_rows, img_cols ))
-            Y_Train = np_utils.to_categorical(Y_Train, nb_classes)
-
         model.fit(
             X_Train,
             Y_Train,
             batch_size=batch_size,
             nb_epoch=nb_epoch,
             show_accuracy=True,
-            verbose=1,
-            validation_data=(X_Valid, Y_Valid))
+            verbose=1)
 
         #collect statistics of performance
         y_predicted = model.predict(X_Test, batch_size=batch_size)
@@ -200,7 +179,6 @@ def run():
         All_confusion_matrix.append(confusion_matrix)
         print('Starting Active Learning in Experiment ', e)
 
-        print('Starting Active Learning in Experiment ', e)
 
         for i in range(acquisition_iterations):
             print('POOLING ITERATION', i)
@@ -295,6 +273,7 @@ def run():
             Y_Train = np.concatenate((Y_Train, Pooled_Y), axis=0)
 
             if oversample:
+                print ("Oversamplying")
                 X_Train = X_Train.reshape((X_Train.shape[0], img_rows**2))
                 # print (X_Train.shape)
 
@@ -324,8 +303,7 @@ def run():
                 batch_size=batch_size,
                 nb_epoch=nb_epoch,
                 show_accuracy=True,
-                verbose=1,
-                validation_data=(X_Valid, Y_Valid))
+                verbose=1)
 
             #collect statistics of performance
             y_predicted = model.predict(X_Test, batch_size=batch_size)
@@ -371,12 +349,13 @@ def run():
         e += 1
         if (e >= n_experiments ):
             break
-
 if __name__ == "__main__":
         parser = argparse.ArgumentParser()
         parser.add_argument("-ds_type", "--dataset_type", help=" 0 => '0 Background',  -1 -> '=1 Background', scaled_negative => 'Scaled negative background'")
         parser.add_argument("-ovs", "--oversampled", help ="Oversampled training",  action="store_true")
+        parser.add_argument("-sr", "--slice_range", help="Number of subset to consider", default=6, type = int)
         args = parser.parse_args()
         dataset_type = args.dataset_type
         oversample =args.oversampled
+        slice_range = args.slice_range
         run()
