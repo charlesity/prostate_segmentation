@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 from keras.regularizers import l2, activity_l2
 from sklearn import metrics
 from sklearn.cross_validation import StratifiedShuffleSplit
-from imblearn.over_sampling import SMOTE
+from imblearn.over_sampling import SMOTE, RandomOverSampler
 
 import glob as glob
 from active_deep_utilities import *
@@ -92,7 +92,7 @@ def run():
     pool_batch_samples = 100  #Number to sample from the Pool for dropout evaluation
 
     img_dim = img_rows * img_cols  #flattened image dimension
-    all_files = all_files[:3]
+    # all_files = all_files[:3]
     XY_Data = fetch_data(all_files, 0)
 
 
@@ -100,7 +100,8 @@ def run():
     y = XY_Data[:, img_dim]
 
     sss = StratifiedShuffleSplit(y, n_experiments, test_size=0.33, random_state=0)
-    balancer = SMOTE(random_state=0)
+    smote_balancer = SMOTE(random_state=0)
+    random_balancer = RandomOverSampler(random_state=0)
     # Number of times to perform experiments... Note this is different from the epoch
     e = 0 #starting experiment number
     for train_index, test_index in sss:
@@ -131,6 +132,7 @@ def run():
         All_ap = list()
         All_recall_score = list()
         All_precision_score = list()
+        All_confusion_matrix = list()
         X_Pool_All = np.zeros(shape=(1))  #store all the pooled indices
 
         model = build_model(nb_filters, nb_conv, nb_pool, input_shape, nb_classes, X_Train.shape[0], c_param = 3.5)
@@ -138,8 +140,21 @@ def run():
 
         if oversample:
             X_Train = X_Train.reshape((X_Train.shape[0], img_rows**2))
-            Y_Train = np.argmax(Y_Train, axis=1))
-            X_Train, Y_Train = balancer.fit_tranform(X_Train, Y_Train)
+            print (X_Train.shape)
+
+            Y_Train = np.argmax(Y_Train, axis=1)
+            print (Y_Train)
+            min_class_num =np.min(np.bincount(Y_Train.reshape(-1).astype(np.int)))
+            if min_class_num < 4:
+                print ("Random balancer")
+                X_Train, Y_Train =random_balancer.fit_sample(X_Train, Y_Train)
+            else:
+                X_Train, Y_Train = smote_balancer.fit_sample(X_Train, Y_Train)
+                print ("Random balancer")
+            print (Y_Train)
+
+            print (X_Train.shape)
+            # print (Y_Train)
             #reshape it back and continue
             X_Train= X_Train.reshape((X_Train.shape[0], 1, img_rows, img_cols ))
             Y_Train = np_utils.to_categorical(Y_Train, nb_classes)
@@ -170,6 +185,7 @@ def run():
         recall_score = metrics.recall_score(y_reversed, y_score)
         precision, recall, _ = metrics.precision_recall_curve(y_reversed, y_score, pos_label = 1)
         average_precision = metrics.average_precision_score(y_reversed, y_score)
+        confusion_matrix = metrics.confusion_matrix(y_reversed, y_score)
         print ("Experiment ", e, "acquisition ", 0)
         print('Average Precision', average_precision, "precision score", precision_score, "recall score ", recall_score)
         print ('AUC', auc)
@@ -180,6 +196,7 @@ def run():
         All_ap.append(average_precision)
         All_recall_score.append(recall_score)
         All_precision_score.append(precision_score)
+        All_confusion_matrix.append(confusion_matrix)
         print('Starting Active Learning in Experiment ', e)
 
         for i in range(acquisition_iterations):
@@ -259,11 +276,31 @@ def run():
             X_Pool = np.concatenate((X_Pool, X_Pool_Dropout), axis=0)
             Y_Pool = np.concatenate((Y_Pool, Y_Pool_Dropout), axis=0)
 
+            print (Y_Train)
             X_Train = np.concatenate((X_Train, Pooled_X), axis=0)
             Y_Train = np.concatenate((Y_Train, Pooled_Y), axis=0)
 
-            # convert class vectors to binary class matrices
-            Y_Train = np_utils.to_categorical(Y_Train, nb_classes)
+            if oversample:
+                X_Train = X_Train.reshape((X_Train.shape[0], img_rows**2))
+                # print (X_Train.shape)
+
+                Y_Train = np.argmax(Y_Train, axis=1)
+                # print (Y_Train)
+                min_class_num =np.min(np.bincount(Y_Train.reshape(-1).astype(np.int)))
+                if min_class_num < 4:
+                    # print ("Random balancer")
+                    X_Train, Y_Train =random_balancer.fit_sample(X_Train, Y_Train)
+                else:
+                    X_Train, Y_Train = smote_balancer.fit_sample(X_Train, Y_Train)
+                    # print ("Smote balancer")
+                # print (Y_Train)
+
+                # print (X_Train.shape)
+                # print (Y_Train)
+                #reshape it back and continue
+                X_Train= X_Train.reshape((X_Train.shape[0], 1, img_rows, img_cols ))
+                Y_Train = np_utils.to_categorical(Y_Train, nb_classes)
+
 
             model = build_model(nb_filters, nb_conv, nb_pool, input_shape, nb_classes, X_Train.shape[0], c_param = 3.5)
             model.compile(loss='categorical_crossentropy', optimizer='adam')
@@ -293,6 +330,7 @@ def run():
             recall_score = metrics.recall_score(y_reversed, y_score)
             precision, recall, _ = metrics.precision_recall_curve(y_reversed, y_score, pos_label = 1)
             average_precision = metrics.average_precision_score(y_reversed, y_score)
+            confusion_matrix = metrics.confusion_matrix(y_reversed, y_score)
             print ("Experiment ", e, "acquisition ", i)
             print('Average Precision', average_precision, "precision score", precision_score, "recall score ", recall_score)
             print ('AUC', auc)
@@ -303,6 +341,7 @@ def run():
             All_ap.append(average_precision)
             All_recall_score.append(recall_score)
             All_precision_score.append(precision_score)
+            All_confusion_matrix.append(confusion_matrix)
 
         print('Saving Results Per Experiment')
 
@@ -319,6 +358,8 @@ def run():
 if __name__ == "__main__":
         parser = argparse.ArgumentParser()
         parser.add_argument("-ds_type", "--dataset_type", help=" 0 => '0 Background',  -1 -> '=1 Background', scaled_negative => 'Scaled negative background'")
+        parser.add_argument("-ovs", "--oversampled", help ="Oversampled training",  action="store_true")
         args = parser.parse_args()
         dataset_type = args.dataset_type
+        oversample =args.oversampled
         run()
