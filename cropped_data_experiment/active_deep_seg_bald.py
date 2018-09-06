@@ -31,7 +31,7 @@ import argparse
 
 
 def run():
-    currentScript = os.path.splitext(__file__)[0]
+    currentScript = os.path.basename(__file__)
     if dataset_type == '0':
         data_files = '../dataset/cropped/zero/*.npz'
         temp = currentScript
