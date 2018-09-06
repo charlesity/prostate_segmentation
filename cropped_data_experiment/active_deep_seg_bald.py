@@ -364,6 +364,7 @@ def run():
         np.save(save_location+'_AVG_pre_' + str(e) + '.npy', All_ap)
         np.save(save_location+'_recall_score_' + str(e) + '.npy', All_recall_score)
         np.save(save_location+'_precision_score_' + str(e) + '.npy', All_precision_score)
+        np.save(save_location+'_confusion_matrix' + str(e) + '.npy', All_confusion_matrix)
         print ("===================== Experiment number ",e+1, " completed======================== " )
         e += 1
         if (e >= n_experiments ):
