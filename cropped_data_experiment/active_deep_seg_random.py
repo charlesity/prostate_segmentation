@@ -83,13 +83,13 @@ def run():
 
     dropout_iterations = 20  # number of dropout ROUNDS for uncertainty estimation
 
-    active_query_batch = 20  # number to added to the training data after active score evaluation
+    active_query_batch = 60  # number to added to the training data after active score evaluation
     # All unlabeled samples could be considered
 
     X_Train_percent = .2  # initial train percent from the entire training set
     x_val_percent = .5  # of leftovers
 
-    pool_batch_samples = 100  #Number to sample from the Pool for dropout evaluation
+    pool_batch_samples = 600  #Number to sample from the Pool for dropout evaluation
 
     img_dim = img_rows * img_cols  #flattened image dimension
     # all_files = all_files[:3]
@@ -121,7 +121,7 @@ def run():
         input_shape = (1, img_rows, img_cols)
 
         #split train set into train, val, and unlabeled pool
-        X_Train, Y_Train, X_Valid, Y_Valid, X_Pool, Y_Pool = split_train(X_Train_all, Y_Train_all, img_rows = img_rows, img_cols =img_cols, nb_classes= nb_classes,
+        X_Train, Y_Train, X_Valid, Y_Valid, X_Pool, Y_Pool = split_train_ratio_based(X_Train_all, Y_Train_all, img_rows = img_rows, img_cols =img_cols, nb_classes= nb_classes,
          X_Train_percent = X_Train_percent, val_percent =x_val_percent)
 
 
@@ -139,27 +139,6 @@ def run():
 
         model = build_model(nb_filters, nb_conv, nb_pool, input_shape, nb_classes, X_Train.shape[0], c_param = 3.5)
         model.compile(loss='categorical_crossentropy', optimizer='adam')
-
-        if oversample:
-            X_Train = X_Train.reshape((X_Train.shape[0], img_rows**2))
-            # print (X_Train.shape)
-
-            Y_Train = np.argmax(Y_Train, axis=1)
-            # print (Y_Train)
-            min_class_num =np.min(np.bincount(Y_Train.reshape(-1).astype(np.int)))
-            if min_class_num < 4:
-                # print ("Random balancer")
-                X_Train, Y_Train =random_balancer.fit_sample(X_Train, Y_Train)
-            else:
-                X_Train, Y_Train = smote_balancer.fit_sample(X_Train, Y_Train)
-                # print ("Smote balancer")
-            # print (Y_Train)
-
-            # print (X_Train.shape)
-            # print (Y_Train)
-            #reshape it back and continue
-            X_Train= X_Train.reshape((X_Train.shape[0], 1, img_rows, img_cols ))
-            Y_Train = np_utils.to_categorical(Y_Train, nb_classes)
 
         model.fit(
             X_Train,
@@ -188,6 +167,7 @@ def run():
         precision, recall, _ = metrics.precision_recall_curve(y_reversed, y_score, pos_label = 1)
         average_precision = metrics.average_precision_score(y_reversed, y_score)
         confusion_matrix = metrics.confusion_matrix(y_reversed, y_score)
+        print ("Script :"+currentScript)
         print ("Experiment ", e, "acquisition ", 0)
         print('Average Precision', average_precision, "precision score", precision_score, "recall score ", recall_score)
         print ('AUC', auc)
@@ -268,6 +248,7 @@ def run():
             precision, recall, _ = metrics.precision_recall_curve(y_reversed, y_score, pos_label = 1)
             average_precision = metrics.average_precision_score(y_reversed, y_score)
             confusion_matrix = metrics.confusion_matrix(y_reversed, y_score)
+            print ("Script :"+currentScript)
             print ("Experiment ", e, "acquisition ", i)
             print('Average Precision', average_precision, "precision score", precision_score, "recall score ", recall_score)
             print ('AUC', auc)
