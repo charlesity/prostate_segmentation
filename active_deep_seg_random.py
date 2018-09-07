@@ -29,12 +29,14 @@ import os
 
 
 
-currentScript = os.path.splitext(__file__)[0]  #to collect performance data
+currentScript = os.path.basename(__file__)  #to collect performance data
+save_location = './Results/' + currentScript
 data_files = './dataset/'
 all_files = glob.glob(data_files + '/*.npz')
 all_files = all_files  #load the number of folders indicated in the slice.... loading all will require more memory
 
-n_experiments = 3  # number of experiments
+# print (len(all_files))
+n_experiments = 3 # number of experiments
 batch_size = 128
 nb_classes = 2
 
@@ -53,21 +55,25 @@ acquisition_iterations = 30 # number of aquisitions from unlabeled samples
 
 dropout_iterations = 20  # number of dropout ROUNDS for uncertainty estimation
 
-active_query_batch = 20  # number to added to the training data after active score evaluation
+active_query_batch = 60  # number to added to the training data after active score evaluation
 # All unlabeled samples could be considered
 
 X_Train_percent = .2  # initial train percent from the entire training set
 x_val_percent = .5  # of leftovers
 
-pool_batch_samples = 100  #Number to sample from the Pool for dropout evaluation
+pool_batch_samples = 600  #Number to sample from the Pool for dropout evaluation
 
 img_dim = img_rows * img_cols  #flattened image dimension
 # all_files = all_files[:3]
-XY_Data = fetch_data(all_files, 0)
 
+XY_Data = fetch_data(all_files, 6, img_dim = (img_rows, img_cols))
+
+# print (XY_Data.shape)
 
 X = XY_Data[:, :img_dim]
 y = XY_Data[:, img_dim]
+
+
 
 sss = StratifiedShuffleSplit(y, n_experiments, test_size=0.33, random_state=0)
 
@@ -90,31 +96,31 @@ for train_index, test_index in sss:
     input_shape = (1, img_rows, img_cols)
 
     #split train set into train, val, and unlabeled pool
-    X_Train, Y_Train, X_Valid, Y_Valid, X_Pool, Y_Pool = split_train_ratio_based(X_Train_all, Y_Train_all, img_rows = img_rows, img_cols =img_cols, nb_classes= nb_classes,
+    X_Train, Y_Train, X_Pool, Y_Pool = split_train_ratio_based(X_Train_all, Y_Train_all, img_rows = img_rows, img_cols =img_cols, nb_classes= nb_classes,
      X_Train_percent = X_Train_percent, val_percent =x_val_percent)
 
 
-    #performance evaluation metric for each experiment
+        #performance evaluation metric for each experiment
     All_auc = list()  #Receiver Operator Characteristic data
     All_pre = list()
     All_rec = list()
     All_ap = list()
     All_recall_score = list()
     All_precision_score = list()
+    All_confusion_matrix = list()
     X_Pool_All = np.zeros(shape=(1))  #store all the pooled indices
 
     model = build_model(nb_filters, nb_conv, nb_pool, input_shape, nb_classes, X_Train.shape[0], c_param = 3.5)
     model.compile(loss='categorical_crossentropy', optimizer='adam')
+
     model.fit(
         X_Train,
         Y_Train,
         batch_size=batch_size,
         nb_epoch=nb_epoch,
         show_accuracy=True,
-        verbose=1,
-        validation_data=(X_Valid, Y_Valid))
+        verbose=1)
 
-    # model.save_weights("./saved_models/"+currentScript+"model_0.h5")
     #collect statistics of performance
     y_predicted = model.predict(X_Test, batch_size=batch_size)
     y_reversed = np.argmax(Y_Test, axis=1)
@@ -132,18 +138,20 @@ for train_index, test_index in sss:
     recall_score = metrics.recall_score(y_reversed, y_score)
     precision, recall, _ = metrics.precision_recall_curve(y_reversed, y_score, pos_label = 1)
     average_precision = metrics.average_precision_score(y_reversed, y_score)
+    confusion_matrix = metrics.confusion_matrix(y_reversed, y_score)
+    print ("Script :"+currentScript)
     print ("Experiment ", e, "acquisition ", 0)
     print('Average Precision', average_precision, "precision score", precision_score, "recall score ", recall_score)
     print ('AUC', auc)
+
     All_auc.append(auc)
     All_pre.append(precision)
     All_rec.append(recall)
     All_ap.append(average_precision)
     All_recall_score.append(recall_score)
     All_precision_score.append(precision_score)
-
+    All_confusion_matrix.append(confusion_matrix)
     print('Starting Active Learning in Experiment ', e)
-
     for i in range(acquisition_iterations):
         print('POOLING ITERATION', i)
         X_Pool_index = np.asarray(random.sample(range(0, pool_batch_samples), active_query_batch))
@@ -159,9 +167,6 @@ for train_index, test_index in sss:
         X_Train = np.concatenate((X_Train, Pooled_X), axis=0)
         Y_Train = np.concatenate((Y_Train, Pooled_Y), axis=0)
 
-        # convert class vectors to binary class matrices
-        Y_Train = np_utils.to_categorical(Y_Train, nb_classes)
-
         model = build_model(nb_filters, nb_conv, nb_pool, input_shape, nb_classes, X_Train.shape[0], c_param = 3.5)
         model.compile(loss='categorical_crossentropy', optimizer='adam')
         model.fit(
@@ -170,10 +175,8 @@ for train_index, test_index in sss:
             batch_size=batch_size,
             nb_epoch=nb_epoch,
             show_accuracy=True,
-            verbose=1,
-            validation_data=(X_Valid, Y_Valid))
+            verbose=1)
 
-        # model.save_weights("./saved_models/"+currentScript+"model_"+str(i+1)+".h5")
         #collect statistics of performance
         y_predicted = model.predict(X_Test, batch_size=batch_size)
         y_reversed = np.argmax(Y_Test, axis=1)
@@ -191,6 +194,8 @@ for train_index, test_index in sss:
         recall_score = metrics.recall_score(y_reversed, y_score)
         precision, recall, _ = metrics.precision_recall_curve(y_reversed, y_score, pos_label = 1)
         average_precision = metrics.average_precision_score(y_reversed, y_score)
+        confusion_matrix = metrics.confusion_matrix(y_reversed, y_score)
+        print ("Script :"+currentScript)
         print ("Experiment ", e, "acquisition ", i)
         print('Average Precision', average_precision, "precision score", precision_score, "recall score ", recall_score)
         print ('AUC', auc)
@@ -201,23 +206,17 @@ for train_index, test_index in sss:
         All_ap.append(average_precision)
         All_recall_score.append(recall_score)
         All_precision_score.append(precision_score)
+        All_confusion_matrix.append(confusion_matrix)
 
     print('Saving Results Per Experiment')
 
-    np.save('./Results/' + currentScript + '_AUC_Experiment_' + str(e) +
-            '.npy', All_auc)
-    np.save('./Results/' + currentScript + '_PRE_Experiment_' + str(e) +
-            '.npy', All_pre)
-    np.save('./Results/' + currentScript + '_REC_Experiment_' + str(e) +
-            '.npy', All_rec)
-    np.save(
-        './Results/' + currentScript+'_AVG_pre_' + str(e) + '.npy',
-        All_ap)
-    np.save(
-        './Results/' + currentScript+'_recall_score_' + str(e) + '.npy',
-        All_recall_score)
-    np.save('./Results/' + currentScript+'_precision_score_' + str(e) + '.npy',
-        All_precision_score)
+    np.save(save_location + '_AUC_Experiment_' + str(e) + '.npy', All_auc)
+    np.save(save_location + '_PRE_Experiment_' + str(e) + '.npy', All_pre)
+    np.save(save_location + '_REC_Experiment_' + str(e) + '.npy', All_rec)
+    np.save(save_location+'_AVG_pre_' + str(e) + '.npy', All_ap)
+    np.save(save_location+'_recall_score_' + str(e) + '.npy', All_recall_score)
+    np.save(save_location+'_precision_score_' + str(e) + '.npy', All_precision_score)
+    np.save(save_location+'_confusion_matrix' + str(e) + '.npy', All_confusion_matrix)
     print ("===================== Experiment number ",e+1, " completed======================== " )
     e += 1
     if (e >= n_experiments ):
