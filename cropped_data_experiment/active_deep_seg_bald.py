@@ -104,7 +104,7 @@ def run():
     smote_balancer = SMOTE(random_state=0)
     random_balancer = RandomOverSampler(random_state=0)
     # Number of times to perform experiments... Note this is different from the epoch
-    e = 0 #starting experiment number
+    e = 2 #starting experiment number
     for train_index, test_index in sss:
         # the data, split between train and test sets
         X_Train_all, X_Test = X[train_index], X[test_index]
