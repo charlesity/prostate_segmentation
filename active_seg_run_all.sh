@@ -4,8 +4,6 @@ echo "Welcome"
 sleep 1
 echo "Starting script"
 
-python -W ignore active_deep_seg_all.py
 
-git add Results/
-git commit -m "updated results"
-git push origin master
+source ~/charles/environments/keras0/bin/activate
+python -W ignore active_deep_seg_all.py
