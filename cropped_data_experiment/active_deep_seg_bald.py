@@ -65,7 +65,7 @@ def run():
     all_files = glob.glob(data_files)
     all_files = all_files  #load the number of folders indicated in the slice.... loading all will require more memory
 
-    n_experiments = 3 # number of experiments
+     # number of experiments
     batch_size = 128
     nb_classes = 2
 
@@ -305,7 +305,7 @@ def run():
                 show_accuracy=True,
                 verbose=1)
 
-            if i>=15 and i <=18:
+            if i>=10 and i <=18:
                 model.save_weights('./saved_models/'+currentScript+'_'+str(i)+".h5")
 
             #collect statistics of performance
@@ -357,8 +357,10 @@ if __name__ == "__main__":
         parser.add_argument("-ds_type", "--dataset_type", help=" 0 => '0 Background',  -1 -> '=1 Background', scaled_negative => 'Scaled negative background'")
         parser.add_argument("-ovs", "--oversampled", help ="Oversampled training",  action="store_true")
         parser.add_argument("-sr", "--slice_range", help="Number of subset to consider", default=6, type = int)
+        parser.add_argument("-nexp", "--num_exp", help="Number of experiments", default=3, type = int)
         args = parser.parse_args()
         dataset_type = args.dataset_type
         oversample =args.oversampled
         slice_range = args.slice_range
+        n_experiments = args.num_exp
         run()
