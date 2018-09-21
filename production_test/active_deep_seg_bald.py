@@ -256,7 +256,6 @@ def run():
                 show_accuracy=True,
                 verbose=1)
 
-
             if i>=10:
                 model.save_weights('./saved_models/'+currentScript+'_'+str(i)+".h5")
             #collect statistics of performance
