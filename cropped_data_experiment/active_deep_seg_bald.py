@@ -305,6 +305,9 @@ def run():
                 show_accuracy=True,
                 verbose=1)
 
+            if i>=15 and i <=18:
+                model.save_weights('./saved_models/'+currentScript+'_'+str(i)+".h5")
+
             #collect statistics of performance
             y_predicted = model.predict(X_Test, batch_size=batch_size)
             y_reversed = np.argmax(Y_Test, axis=1)
