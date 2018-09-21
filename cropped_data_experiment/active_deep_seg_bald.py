@@ -285,12 +285,7 @@ def run():
                     X_Train, Y_Train =random_balancer.fit_sample(X_Train, Y_Train)
                 else:
                     X_Train, Y_Train = smote_balancer.fit_sample(X_Train, Y_Train)
-                    # print ("Smote balancer")
-                # print (Y_Train)
 
-                # print (X_Train.shape)
-                # print (Y_Train)
-                #reshape it back and continue
                 X_Train= X_Train.reshape((X_Train.shape[0], 1, img_rows, img_cols ))
                 Y_Train = np_utils.to_categorical(Y_Train, nb_classes)
 
@@ -305,7 +300,7 @@ def run():
                 show_accuracy=True,
                 verbose=1)
 
-            if i>=10 and i <=18:
+            if i>=10:
                 model.save_weights('./saved_models/'+currentScript+'_'+str(i)+".h5")
 
             #collect statistics of performance
