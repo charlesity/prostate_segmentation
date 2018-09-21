@@ -285,12 +285,7 @@ def run():
                     X_Train, Y_Train =random_balancer.fit_sample(X_Train, Y_Train)
                 else:
                     X_Train, Y_Train = smote_balancer.fit_sample(X_Train, Y_Train)
-                    # print ("Smote balancer")
-                # print (Y_Train)
 
-                # print (X_Train.shape)
-                # print (Y_Train)
-                #reshape it back and continue
                 X_Train= X_Train.reshape((X_Train.shape[0], 1, img_rows, img_cols ))
                 Y_Train = np_utils.to_categorical(Y_Train, nb_classes)
 
