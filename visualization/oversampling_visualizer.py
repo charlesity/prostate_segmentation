@@ -81,8 +81,19 @@ def run():
         y_resampled.append(y_res)
         X_res_vis.append(pca.fit_transform(X_res))
 
-    X_res_vis.append(X)
+    X_res_vis.append(pca.fit_transform(X))
     y_resampled.append(y)
+
+    #save as csv
+    for i in range(len(methods)+1):
+        values = np.c_[X_res_vis[i], y_resampled[i]]
+        if i == 3:
+            np.savetxt('no_oversamplying.csv', values, delimiter =",")
+        else:
+            np.savetxt(type(methods[i]).__name__+".csv", values, delimiter =",")
+
+
+
 
     for i in range(len(methods)+1):
         print ("Visualizing using  "+ type(methods[index]).__name__)
@@ -92,8 +103,10 @@ def run():
 
         ax = fig.add_subplot(111, projection='3d')
         # ax.scatter(X[y == 0, 0], X[y == 0, 1],X[y == 0, 2],  label="Class #0", alpha=0.5)
-        ax.scatter(X_res_vis [i][y_resampled[i] == 0, 0], X_res_vis [i][y_resampled[i] == 0, 1], X_res_vis [i][y_resampled[i] == 0, 2], color='b',  label="Class #0", alpha=0.5)
-        ax.scatter(X_res_vis [i][y_resampled[i] == 1, 0], X_res_vis [i][y_resampled[i] == 1, 1], X_res_vis [i][y_resampled[i] == 1, 2], color ='r', label="Class #1", alpha=0.5)
+        ax.scatter(X_res_vis [i][y_resampled[i] == 0, 0], X_res_vis [i][y_resampled[i] == 0, 1], X_res_vis [i][y_resampled[i] == 0, 2]
+                   , color='b', marker='o',  label="Class #0", alpha=0.5)
+        ax.scatter(X_res_vis [i][y_resampled[i] == 1, 0], X_res_vis [i][y_resampled[i] == 1, 1], X_res_vis [i][y_resampled[i] == 1, 2]
+                   , color ='r', marker='^', label="Class #1", alpha=0.5)
 
         y_ps = (y_resampled[i][y_resampled[i] == 1]).shape[0]
         y_neg = (y_resampled[i][y_resampled[i] == 0]).shape[0]
