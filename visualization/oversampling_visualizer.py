@@ -81,8 +81,19 @@ def run():
         y_resampled.append(y_res)
         X_res_vis.append(pca.fit_transform(X_res))
 
-    X_res_vis.append(X)
+    X_res_vis.append(pca.fit_transform(X))
     y_resampled.append(y)
+
+    #save as csv
+    for i in range(len(methods)+1):
+        values = np.c_[X_res_vis[i], y_resampled[i]]
+        if i == 3:
+            np.savetxt('no_oversamplying.csv', values, delimiter =",")
+        else:
+            np.savetxt(type(methods[i]).__name__+".csv", values, delimiter =",")
+
+
+
 
     for i in range(len(methods)+1):
         print ("Visualizing using  "+ type(methods[index]).__name__)
